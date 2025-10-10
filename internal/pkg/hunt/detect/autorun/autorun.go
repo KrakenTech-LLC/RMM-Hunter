@@ -104,7 +104,7 @@ func isSuspiciousAutoRun(name, command string) bool {
 	}
 
 	// Check against common Suspicious executable patterns
-	for _, imageEnd := range common.CommonImageEnds {
+	for _, imageEnd := range common.CommonImageSuffixes {
 		imageEndLower := strings.ToLower(imageEnd)
 		if strings.Contains(commandLower, imageEndLower) {
 			return true

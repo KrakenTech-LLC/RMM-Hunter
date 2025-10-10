@@ -73,8 +73,8 @@ func searchDirectory(dir string, resultChan chan<- string) {
 			return nil
 		}
 
-		// Check if the file path ends with any CommonImageEnds
-		for _, imageEnd := range common.CommonImageEnds {
+		// Check if the file path ends with any CommonImageSuffixes
+		for _, imageEnd := range common.CommonImageSuffixes {
 			// Normalize path separators and make case-insensitive comparison
 			normalizedPath := strings.ToLower(filepath.ToSlash(path))
 			normalizedImageEnd := strings.ToLower(filepath.ToSlash(imageEnd))
