@@ -7,7 +7,7 @@ const htmlTemplate = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{.ReportName}} - RMM Hunter Report</title>
 
-<!-- Modern font -->
+<!-- Font -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
 
 <style>
