@@ -32,6 +32,8 @@ func Detect() []AutoRun {
 	roots := []registry.Key{registry.LOCAL_MACHINE, registry.CURRENT_USER}
 	rootNames := []string{"HKLM", "HKCU"}
 
+	fmt.Printf("   [>] Dispositioning %d AutoRun Keys\n", len(autorunKeys)*len(roots))
+
 	totalEntries := 0
 	for i, root := range roots {
 		for _, keyPath := range autorunKeys {
@@ -41,7 +43,6 @@ func Detect() []AutoRun {
 		}
 	}
 
-	fmt.Printf("   [>] Dispositioning %d AutoRun Entries\n", totalEntries)
 	fmt.Printf("[+] Found %d Suspicious AutoRun Applications\n", len(suspiciousAutoRuns))
 
 	return suspiciousAutoRuns
