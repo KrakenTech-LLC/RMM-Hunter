@@ -30,12 +30,15 @@ var huntCmd = &cobra.Command{
 	Use:   "hunt",
 	Short: "Hunt for RMM software on the system",
 	Long: `Hunt mode scans the system for signs of RMM software including:
-- Suspicious processes
+- Suspicious Processes
+- Suspicious Autoruns
 - Services
-- Binaries and executables
-- Network connections
-- Scheduled tasks
-- Registry entries`,
+- Binaries and Executables
+- Directories
+- Processes
+- Outbound Network Connections
+- Scheduled Tasks
+- Registry Entries`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Starting RMM Hunt...")
 		runHunt()
@@ -54,7 +57,7 @@ Requires a JSON input file containing hunt results to determine what to remove.`
 			os.Exit(1)
 		}
 
-		fmt.Printf("Starting Sus Elimination using input file: %s\n", inputFile)
+		fmt.Printf("Starting RMM Elimination using input file: %s\n", inputFile)
 		// TODO: Call eliminate.Eliminate() function
 		runEliminate()
 	},
@@ -90,7 +93,6 @@ func init() {
 }
 
 func runHunt() {
-	fmt.Println("Starting Sus Hunt...")
 	if len(excludeRMMs) > 0 {
 		fmt.Printf("Excluding RMMs: %v\n", excludeRMMs)
 	}

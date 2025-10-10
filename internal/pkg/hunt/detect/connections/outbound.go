@@ -45,7 +45,7 @@ func compareConnections(connections []NetworkConnection) []NetworkConnection {
 
 		for _, dns := range common.CommonDNS {
 			if matchesDNSPattern(remote, dns) {
-				fmt.Printf("   [?] Found %s\n", conn.RemoteHost)
+				fmt.Printf("      [?] Found %s\n", conn.RemoteHost)
 				suspiciousConnections = append(suspiciousConnections, conn)
 				break
 			}

@@ -22,17 +22,10 @@ func AnalyzeExecutablePath(command string) (bool, string) {
 		}
 	}
 
-	// Check for suspicious installation paths
-	suspiciousPaths := []string{
-		"\\temp\\", "\\tmp\\", "\\appdata\\local\\temp\\",
-		"\\users\\public\\", "\\programdata\\",
-		"\\windows\\temp\\", "\\%temp%\\",
-	}
-
 	execPathLower := strings.ToLower(execPath)
 
 	// Check for suspicious installation paths
-	suspiciousPaths = []string{
+	suspiciousPaths := []string{
 		"\\temp\\", "\\tmp\\", "\\appdata\\local\\temp\\",
 		"\\users\\public\\", "\\programdata\\",
 		"\\windows\\temp\\", "\\%temp%\\",
@@ -50,7 +43,6 @@ func AnalyzeExecutablePath(command string) (bool, string) {
 				"\\oracle\\",
 				"\\citrix\\",
 				"\\vmware\\",
-				// Add more trusted publishers as needed
 			}
 
 			isTrusted := false
