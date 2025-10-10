@@ -159,7 +159,19 @@ Contributions are welcome. Please submit pull requests with:
 
 ## License
 
-[Your License Here]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Attribution
+
+If you use RMM-Hunter in your project or research, please provide attribution by including:
+- A link back to this repository: `https://github.com/KrakenTech/RMM-Hunter`
+- Credit to **KrakenTech LLC** (https://krakensec.tech)
+
+Example attribution:
+```
+This project uses RMM-Hunter by KrakenTech LLC
+https://github.com/KrakenTech/RMM-Hunter
+```
 
 ## Disclaimer
 
@@ -171,5 +183,5 @@ For issues, questions, or feature requests, please open an issue on the GitHub r
 
 ---
 
-**Note**: The underlying Scurvy framework is not publicly accessible and is maintained in a private repos
+**Note**: The underlying Scurvy framework is not publicly accessible and is maintained in a private repository.
 
