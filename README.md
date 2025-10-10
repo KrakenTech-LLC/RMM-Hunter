@@ -63,14 +63,12 @@ The HTML report includes:
 ### Binary Download
 
 Download the latest compiled binary from the releases page:
-```
-
-powershell
+```powershell
 Download rmm-hunter.exe
-Run with administrator privileges```
+Run with administrator privileges
+```
 
 ### Building from Source
-```
 
 The Scurvy Library is not publicly accessible making building this tool from source impossible at the moment.
 
@@ -79,13 +77,16 @@ The Scurvy Library is not publicly accessible making building this tool from sou
 ### Hunt Mode
 
 Execute a comprehensive system scan:
+
 ```powershell
 powershell .\rmm-hunter.exe hunt
 ```
 
 With custom output file:
 
-powershell .\rmm-hunter.exe hunt --output custom-report.json``` 
+```powershell
+powershell .\rmm-hunter.exe hunt --output custom-report.json
+``` 
 
 Exclude specific RMM tools from detection:
 ```powershell
