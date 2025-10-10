@@ -79,19 +79,18 @@ The Scurvy Library is not publicly accessible making building this tool from sou
 ### Hunt Mode
 
 Execute a comprehensive system scan:
+```powershell
+powershell .\rmm-hunter.exe hunt
 ```
-
-powershell .\rmm-hunter.exe hunt```
 
 With custom output file:
-```
 
 powershell .\rmm-hunter.exe hunt --output custom-report.json``` 
 
 Exclude specific RMM tools from detection:
+```powershell
+powershell .\rmm-hunter.exe hunt --exclude TeamViewer,AnyDesk
 ```
-
-powershell .\rmm-hunter.exe hunt --exclude TeamViewer,AnyDesk```
 
 ### Eliminate Mode
 
@@ -122,7 +121,6 @@ The modular architecture allows for extensible detection capabilities while main
 ## Output Formats
 
 ### JSON Report
-```
 
 json { "processes": [...], "services": [...], "binaries": [...], "autoRuns": [...], "scheduledTasks": [...], "outboundConnections": [...], "directories": [...] }``` 
 
@@ -168,7 +166,7 @@ If you use RMM-Hunter in your project or research, please provide attribution by
 - Credit to **KrakenTech LLC** (https://krakensec.tech)
 
 Example attribution:
-```
+```txt
 This project uses RMM-Hunter by KrakenTech LLC
 https://github.com/KrakenTech/RMM-Hunter
 ```
