@@ -25,8 +25,9 @@ type DetailViewModel struct {
 	typeKey string
 	index   int
 	data    suspicious.Suspicious
-	// When modalErr != "", show modal and require ESC to dismiss
-	modalErr string
+	// When modal* != "", show modal and require ESC to dismiss
+	modalErr  string
+	modalWarn string
 }
 
 func NewDetailView(typeKey string, index int, data suspicious.Suspicious) DetailViewModel {
@@ -38,10 +39,11 @@ func (m DetailViewModel) Init() tea.Cmd { return nil }
 func (m DetailViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch v := msg.(type) {
 	case tea.KeyMsg:
-		if m.modalErr != "" {
+		if m.modalErr != "" || m.modalWarn != "" {
 			// Modal active: only ESC dismisses
 			if v.String() == "esc" {
 				m.modalErr = ""
+				m.modalWarn = ""
 			}
 			return m, nil
 		}
@@ -61,6 +63,10 @@ func (m DetailViewModel) View() string {
 	title := lipgloss.NewStyle().Bold(true).Render("Details — press ! to eliminate, Left to go back, q to quit")
 	body := m.renderDetails()
 	view := title + "\n\n" + body
+	if m.modalWarn != "" {
+		modal := lipgloss.NewStyle().Padding(1, 2).Foreground(lipgloss.Color("214")).Border(lipgloss.RoundedBorder()).Render("Warning:\n" + m.modalWarn + "\n\nPress ESC to dismiss")
+		view += "\n\n" + modal
+	}
 	if m.modalErr != "" {
 		modal := lipgloss.NewStyle().Padding(1, 2).Foreground(lipgloss.Color("203")).Border(lipgloss.RoundedBorder()).Render("Elimination failed:\n" + m.modalErr + "\n\nPress ESC to dismiss")
 		view += "\n\n" + modal

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -120,7 +121,12 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case RequestEliminateMsg:
 			if err := m.performEliminate(v.TypeKey, v.Index); err != nil {
-				m.detail.modalErr = err.Error()
+				var wb WarnBlock
+				if errors.As(err, &wb) {
+					m.detail.modalWarn = wb.Error()
+				} else {
+					m.detail.modalErr = err.Error()
+				}
 				return m, nil
 			}
 			// success -> rebuild list and go back
@@ -168,6 +174,9 @@ func (m *AppModel) performEliminate(typeKey string, idx int) error {
 		m.data.AutoRuns = append(m.data.AutoRuns[:idx], m.data.AutoRuns[idx+1:]...)
 	case "binaries":
 		b := m.data.Binaries[idx]
+		if err := CheckBinaryBlocked(b, m.data); err != nil {
+			return err
+		}
 		if err := EliminateBinary(b); err != nil {
 			return err
 		}
@@ -180,6 +189,9 @@ func (m *AppModel) performEliminate(typeKey string, idx int) error {
 		m.data.OutboundConnections = append(m.data.OutboundConnections[:idx], m.data.OutboundConnections[idx+1:]...)
 	case "directories":
 		d := m.data.Directories[idx]
+		if err := CheckDirectoryBlocked(d, m.data); err != nil {
+			return err
+		}
 		if err := EliminateDirectory(d); err != nil {
 			return err
 		}
