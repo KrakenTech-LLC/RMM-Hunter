@@ -21,16 +21,16 @@ func EliminateConnection(dst string) error {
 
 	// Add a block rule for the destination
 	return fw.AddRule(firewall.FirewallRule{
-		Name:          fmt.Sprintf("Block Outgoing %s", dst),
-		Direction:     "outbound",
-		Protocol:      "*",
-		LocalPort:     "",
-		RemotePort:    "",
-		LocalAddress:  "",
-		RemoteAddress: "%s",
-		Action:        "block",
-		Profile:       "",
-		Destination:   dst,
-		Source:        "",
+		Name:                fmt.Sprintf("Block Outgoing %s", dst),
+		Direction:           "outbound",
+		Protocol:            "*",
+		LocalPort:           "",
+		RemotePort:          "",
+		LocalAddress:        "",
+		RemoteIPAddresses:   "",
+		Action:              "block",
+		Profile:             "",
+		DestinationHostname: dst,
+		Source:              "",
 	})
 }

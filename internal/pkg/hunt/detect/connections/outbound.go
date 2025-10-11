@@ -40,15 +40,56 @@ func DetectOutboundConnections() []NetworkConnection {
 func compareConnections(connections []NetworkConnection) []NetworkConnection {
 	var suspiciousConnections []NetworkConnection
 
-	for _, conn := range connections {
-		remote := conn.RemoteHost
+	// Get process names for all PIDs
+	pidToProcessName := getProcessNamesForPIDs(connections)
 
+	for _, conn := range connections {
+		isSuspicious := false
+		reason := ""
+
+		// Check 1: DNS pattern match (domain-based detection)
+		remote := conn.RemoteHost
 		for _, dns := range common.CommonDNS {
 			if matchesDNSPattern(remote, dns) {
-				fmt.Printf("      [?] Found %s\n", conn.RemoteHost)
-				suspiciousConnections = append(suspiciousConnections, conn)
+				isSuspicious = true
+				reason = fmt.Sprintf("DNS match: %s", conn.RemoteHost)
 				break
 			}
+		}
+
+		// Check 2: Process name match (catches RMMs using custom relay servers)
+		if !isSuspicious && conn.PID != "" {
+			if processName, exists := pidToProcessName[conn.PID]; exists {
+				processNameLower := strings.ToLower(processName)
+
+				// Check against known RMM names
+				for _, rmm := range common.CommonRMMs {
+					if strings.Contains(processNameLower, strings.ToLower(rmm)) {
+						isSuspicious = true
+						reason = fmt.Sprintf("RMM process: %s", processName)
+						break
+					}
+				}
+
+				// Check against known RMM executable patterns
+				if !isSuspicious {
+					for _, pattern := range common.CommonImageSuffixes {
+						patternLower := strings.ToLower(pattern)
+						// Remove leading backslash for matching
+						patternClean := strings.TrimPrefix(patternLower, "\\")
+						if strings.Contains(processNameLower, patternClean) {
+							isSuspicious = true
+							reason = fmt.Sprintf("RMM executable: %s", processName)
+							break
+						}
+					}
+				}
+			}
+		}
+
+		if isSuspicious {
+			fmt.Printf("      [?] Found %s (%s)\n", conn.RemoteHost, reason)
+			suspiciousConnections = append(suspiciousConnections, conn)
 		}
 	}
 
@@ -189,4 +230,40 @@ func GetHTTPHostnames() []string {
 	}
 
 	return hostnames
+}
+
+// getProcessNamesForPIDs returns a map of PID -> process name for all connections
+func getProcessNamesForPIDs(connections []NetworkConnection) map[string]string {
+	pidMap := make(map[string]string)
+
+	// Collect unique PIDs
+	uniquePIDs := make(map[string]bool)
+	for _, conn := range connections {
+		if conn.PID != "" && conn.PID != "0" {
+			uniquePIDs[conn.PID] = true
+		}
+	}
+
+	// Query process names for each PID
+	for pid := range uniquePIDs {
+		processName := getProcessNameByPID(pid)
+		if processName != "" {
+			pidMap[pid] = processName
+		}
+	}
+
+	return pidMap
+}
+
+// getProcessNameByPID returns the process name for a given PID
+func getProcessNameByPID(pid string) string {
+	cmd := exec.Command("powershell", "-Command",
+		fmt.Sprintf("(Get-Process -Id %s -ErrorAction SilentlyContinue).ProcessName", pid))
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	processName := strings.TrimSpace(string(output))
+	return processName
 }
