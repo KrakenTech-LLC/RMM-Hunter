@@ -46,8 +46,11 @@ func NewListView(typeKey string, sus suspicious.Suspicious, width, height int) L
 	case "autoruns":
 		header = "Suspicious AutoRuns"
 		for _, ar := range sus.AutoRuns {
-			title := ar.Name
-			desc := fmt.Sprintf("%s (%s)", ar.Command, ar.Location)
+			title := ar.ImageName
+			if title == "" {
+				title = ar.Entry
+			}
+			desc := fmt.Sprintf("%s (%s)", ar.ImagePath, ar.Location)
 			items = append(items, listItem{title: title, desc: desc})
 		}
 	case "binaries":

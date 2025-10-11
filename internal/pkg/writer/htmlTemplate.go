@@ -434,11 +434,14 @@ const htmlTemplate = `<!DOCTYPE html>
         {{if .Findings.AutoRuns}}
             {{range .Findings.AutoRuns}}
             <div class="item">
-                <div class="item-title">{{.Name}}</div>
-                <div class="item-detail"><strong>Command:</strong> {{.Command}}</div>
+                <div class="item-title">{{.ImageName}}</div>
+                <div class="item-detail"><strong>Entry:</strong> {{.Entry}}</div>
+                <div class="item-detail"><strong>Type:</strong> {{.Type}}</div>
                 <div class="item-detail"><strong>Location:</strong> {{.Location}}</div>
-                <div class="item-detail"><strong>Enabled:</strong> {{.Enabled}}</div>
-                {{if .Description}}<div class="item-detail"><strong>Description:</strong> {{.Description}}</div>{{end}}
+                <div class="item-detail"><strong>Image:</strong> {{.ImagePath}}</div>
+                {{if .Arguments}}<div class="item-detail"><strong>Arguments:</strong> {{.Arguments}}</div>{{end}}
+                {{if .LaunchString}}<div class="item-detail"><strong>Launch:</strong> {{.LaunchString}}</div>{{end}}
+                <div class="item-detail"><strong>Hashes:</strong> MD5={{.MD5}} SHA1={{.SHA1}} SHA256={{.SHA256}}</div>
             </div>
             {{end}}
         {{else}}

@@ -78,7 +78,7 @@ func (m DetailViewModel) renderDetails() string {
 	switch m.typeKey {
 	case "autoruns":
 		ar := m.data.AutoRuns[m.index]
-		return fmt.Sprintf("Name: %s\nCommand: %s\nLocation: %s\nEnabled: %v\nDescription: %s", ar.Name, ar.Command, ar.Location, ar.Enabled, ar.Description)
+		return fmt.Sprintf("Type: %s\nEntry: %s\nLaunch: %s\nLocation: %s\nImage: %s\nArgs: %s\nMD5: %s\nSHA1: %s\nSHA256: %s", ar.Type, ar.Entry, ar.LaunchString, ar.Location, ar.ImagePath, ar.Arguments, ar.MD5, ar.SHA1, ar.SHA256)
 	case "binaries":
 		b := m.data.Binaries[m.index]
 		return fmt.Sprintf("Binary: %s\nAction: delete file", b)

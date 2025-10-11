@@ -50,11 +50,22 @@ AutoRun
 The object used to resemble the auto run methods used by the Suspicious software.
 */
 type AutoRun struct {
-	Name        string `json:"name"`
-	Command     string `json:"command"`
-	Location    string `json:"location"`
-	Enabled     bool   `json:"enabled"`
-	Description string `json:"description"`
+	//Name        string `json:"name"`
+	//Command     string `json:"command"`
+	//Location    string `json:"location"`
+	//Enabled     bool   `json:"enabled"`
+	//Description string `json:"description"`
+
+	Type         string `json:"type"`
+	Location     string `json:"location"`
+	ImagePath    string `json:"image_path"`
+	ImageName    string `json:"image_name"`
+	Arguments    string `json:"arguments"`
+	MD5          string `json:"md5"`
+	SHA1         string `json:"sha1"`
+	SHA256       string `json:"sha256"`
+	Entry        string `json:"entry"`
+	LaunchString string `json:"launch_string"`
 }
 
 /*
