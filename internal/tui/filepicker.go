@@ -1,0 +1,123 @@
+package tui
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+// FileSelectedMsg is emitted when a file is chosen
+type FileSelectedMsg struct{ Path string }
+
+// FilePicker is a simple list of .json files in the current directory
+// Press Enter to pick, q/esc to quit
+
+type fileItem struct {
+	title string
+	path  string
+}
+
+func (i fileItem) Title() string       { return i.title }
+func (i fileItem) Description() string { return i.path }
+func (i fileItem) FilterValue() string { return i.title }
+
+type FilePickerModel struct {
+	list    list.Model
+	spinner spinner.Model
+	error   error
+	loading bool
+}
+
+func NewFilePicker() FilePickerModel {
+	delegate := list.NewDefaultDelegate()
+	delegate.ShowDescription = true
+	l := list.New([]list.Item{}, delegate, 0, 0)
+	// Set a sane default; will be updated on WindowSizeMsg
+	l.SetSize(80, 20)
+	l.Title = "Select JSON report"
+	l.Styles.Title = lipgloss.NewStyle().Bold(true)
+	l.SetShowHelp(false)
+	sp := spinner.New()
+	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	m := FilePickerModel{list: l, spinner: sp}
+	return m
+}
+
+func (m FilePickerModel) Init() tea.Cmd {
+	return tea.Batch(m.spinner.Tick, m.loadFilesCmd())
+}
+
+func (m FilePickerModel) loadFilesCmd() tea.Cmd {
+	return func() tea.Msg {
+		entries, err := os.ReadDir(".")
+		if err != nil {
+			return errMsg{err}
+		}
+		seen := map[string]bool{}
+		var items []list.Item
+		for _, e := range entries {
+			name := e.Name()
+			if e.IsDir() {
+				continue
+			}
+			if filepath.Ext(name) != ".json" {
+				continue
+			}
+			fi, err := e.Info()
+			if err != nil || !fi.Mode().IsRegular() {
+				continue
+			}
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			items = append(items, fileItem{title: name, path: name})
+		}
+		return filesLoadedMsg{items}
+	}
+}
+
+type errMsg struct{ error }
+type filesLoadedMsg struct{ items []list.Item }
+
+func (m FilePickerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetSize(msg.Width, msg.Height-2)
+	case filesLoadedMsg:
+		m.loading = false
+		m.list.SetItems(msg.items)
+	case errMsg:
+		m.error = msg
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "esc", "ctrl+c":
+			return m, tea.Quit
+		case "enter":
+			if it, ok := m.list.SelectedItem().(fileItem); ok {
+				return m, func() tea.Msg { return FileSelectedMsg{Path: it.path} }
+			}
+		}
+	}
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
+}
+
+func (m FilePickerModel) View() string {
+	if m.error != nil {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render(fmt.Sprintf("Error: %v\n", m.error))
+	}
+	if m.loading {
+		return "Loading files...\n" + m.spinner.View()
+	}
+	if len(m.list.Items()) == 0 {
+		return "No .json files found in current directory. Press q to exit.\n"
+	}
+	return m.list.View()
+}

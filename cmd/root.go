@@ -5,6 +5,7 @@ import (
 	"os"
 	"rmm-hunter/internal/pkg"
 	"rmm-hunter/internal/pkg/hunter"
+	"rmm-hunter/internal/tui"
 
 	"github.com/spf13/cobra"
 )
@@ -52,13 +53,7 @@ var eliminateCmd = &cobra.Command{
 	Long: `Eliminate mode removes detected Sus software from the system.
 Requires a JSON input file containing hunt results to determine what to remove.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if inputFile == "" {
-			fmt.Println("Error: --input flag is required for eliminate command")
-			os.Exit(1)
-		}
-
-		fmt.Printf("Starting RMM Elimination using input file: %s\n", inputFile)
-		// TODO: Call eliminate.Eliminate() function
+		fmt.Println("Starting Elimination UI...")
 		runEliminate()
 	},
 }
@@ -86,10 +81,9 @@ func init() {
 	huntCmd.Flags().StringVarP(&outputFile, "output", "o", "suspicious-hunter.json",
 		"Output file to write hunt results (optional) Default: suspicious-hunter.json")
 
-	// Eliminate command flags
+	// Eliminate command flags (optional input; if omitted, TUI will show a file picker)
 	eliminateCmd.Flags().StringVarP(&inputFile, "input", "i", "",
-		"JSON input file containing hunt results (required)")
-	eliminateCmd.MarkFlagRequired("input")
+		"JSON input file containing hunt results (optional)")
 }
 
 func runHunt() {
@@ -104,8 +98,9 @@ func runHunt() {
 }
 
 func runEliminate() {
-	// TODO: Implement eliminate functionality
-	fmt.Println("Eliminate functionality not yet implemented")
-	fmt.Printf("Input file: %s\n", inputFile)
-	fmt.Printf("Excluded RMMs: %v\n", excludeRMMs)
+	// Launch the Charmbracelet-based TUI for elimination flow
+	if err := tui.RunEliminateUI(); err != nil {
+		fmt.Printf("[-] TUI error: %v\n", err)
+		os.Exit(1)
+	}
 }
