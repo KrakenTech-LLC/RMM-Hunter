@@ -12,8 +12,9 @@ import (
 
 var (
 	excludeRMMs []string
-	inputFile   string
 	outputFile  string
+	webUI       bool
+	cliUI       bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -81,9 +82,17 @@ func init() {
 	huntCmd.Flags().StringVarP(&outputFile, "output", "o", "suspicious-hunter.json",
 		"Output file to write hunt results (optional) Default: suspicious-hunter.json")
 
-	// Eliminate command flags (optional input; if omitted, TUI will show a file picker)
-	eliminateCmd.Flags().StringVarP(&inputFile, "input", "i", "",
-		"JSON input file containing hunt results (optional)")
+	// Eliminate command flags
+	eliminateCmd.Flags().BoolVarP(&webUI, "web", "w", false,
+		"Use web UI instead of TUI (optional)")
+	eliminateCmd.Flags().BoolVarP(&cliUI, "cli", "c", false,
+		"Use CLI UI instead of TUI (optional)")
+
+	// Mark web and cli flags as mutually exclusive
+	eliminateCmd.MarkFlagsMutuallyExclusive("web", "cli")
+
+	// Mark one of web or cli as required
+	eliminateCmd.MarkFlagsOneRequired("web", "cli")
 }
 
 func runHunt() {
@@ -98,9 +107,19 @@ func runHunt() {
 }
 
 func runEliminate() {
-	// Launch the Charmbracelet-based TUI for elimination flow
-	if err := tui.RunEliminateUI(); err != nil {
-		fmt.Printf("[-] TUI error: %v\n", err)
+	if webUI {
+		// Launch the web UI for elimination flow
+		// TODO: Launch web UI
+		fmt.Println("Web UI not implemented yet")
+		return
+	} else if cliUI {
+		// Launch the TUI for elimination flow
+		if err := tui.RunEliminateUI(); err != nil {
+			fmt.Printf("[-] TUI error: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("No UI specified")
 		os.Exit(1)
 	}
 }
