@@ -8,6 +8,7 @@ import (
 	"rmm-hunter/internal/tui"
 
 	scurvy "github.com/Kraken-OffSec/Scurvy"
+	"github.com/Kraken-OffSec/Scurvy/core/escalator"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,24 @@ var rootCmd = &cobra.Command{
 	Short: "RMM-Hunter - Detect and eliminate Remote Monitoring and Management software",
 	Long: `RMM-Hunter is a tool designed to detect and eliminate Remote Monitoring 
 and Management (RMM) software on Windows systems. It can hunt for suspicious 
-processes, services, binaries, and network connections associated with RMM tools.`,
+processes, services, binaries, and network connections associated with RMM tools.
+
+Steps:
+- Click start
+- Type Powershell (see Windows Powershell)
+- Right click and select "Run as administrator"
+- Navigate to the directory containing rmm-hunter.exe 
+	> If you downloaded the executable, it will be in your Downloads folder
+		> cd ~\Downloads\
+- To start the enumeration process, run the following command:
+	> .\rmm-hunter.exe hunt
+
+- To remove detected RMM software, run the following command:
+	> CLI - A command line interface with interactive prompts
+    	-> .\rmm-hunter.exe eliminate--cli
+	> Web - A web interface for browser based elimination (Under Construction)
+    	-> .\rmm-hunter.exe eliminate --web
+`,
 	Version: "1.0.0",
 }
 
@@ -41,7 +59,10 @@ var huntCmd = &cobra.Command{
 - Processes
 - Outbound Network Connections
 - Scheduled Tasks
-- Registry Entries`,
+- Registry Entries
+
+	> .\rmm-hunter.exe hunt
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Starting RMM Hunt...")
 		runHunt()
@@ -54,21 +75,19 @@ var eliminateCmd = &cobra.Command{
 	Short: "Eliminate Sus software based on hunt results",
 	Long: `Eliminate mode removes detected RMM Software from the system.
 Requires a JSON input file containing hunt results to determine what to remove.
-Administrative Privileges are required. 
-Steps:
-- Click start
-- Type Powershell (see Windows Powershell)
-- Right click and select "Run as administrator"
-- Navigate to the directory containing rmm-hunter.exe 
-	> cd ~\Downloads\
-- Run the following command:
-	> CLI
-    	-> .\rmm-hunter.exe eliminate--cli
-	> Web
+Administrative Privileges are required. The executable will run a UAC prompt asking for escalation permissions to adjust.
+	> CLI - A command line interface with interactive prompts
+    	-> .\rmm-hunter.exe eliminate --cli
+	> Web - A web interface for browser based elimination (Under Construction)
     	-> .\rmm-hunter.exe eliminate --web
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if admin, err := scurvy.IsAdmin(); err != nil || !admin {
+			escErr := escalator.RequireAdmin()
+			if err != nil {
+				fmt.Printf("Failed to elevate: %v\n", escErr)
+				os.Exit(1)
+			}
 			fmt.Println("User is not admin, please run as administrator")
 			os.Exit(1)
 		}
