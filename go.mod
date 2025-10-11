@@ -3,7 +3,7 @@ module rmm-hunter
 go 1.24.7
 
 require (
-	github.com/Kraken-OffSec/Scurvy v0.0.0-20251011211525-6bf6bee1b100
+	github.com/Kraken-OffSec/Scurvy v0.0.0-20251011220403-fbfc55b9d87a
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
