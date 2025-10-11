@@ -10,6 +10,25 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+// ignore overly-generic tokens when matching vendor names
+var genericTokens = map[string]struct{}{
+	"remote": {}, "control": {}, "support": {}, "assist": {}, "viewer": {},
+	"server": {}, "service": {}, "manager": {}, "desktop": {}, "host": {},
+	"client": {}, "agent": {}, "connect": {}, "access": {}, "admin": {},
+	"vpn": {}, "ssh": {}, "vnc": {}, "rdp": {}, "microsoft": {}, "windows": {},
+}
+
+func isNonGenericToken(t string) bool {
+	t = strings.ToLower(strings.TrimSpace(t))
+	if len(t) < 4 {
+		return false
+	}
+	if _, ok := genericTokens[t]; ok {
+		return false
+	}
+	return true
+}
+
 func Detect() []*Service {
 	fmt.Printf("[*] Enumerating Services \n")
 
@@ -52,6 +71,9 @@ func compareServices(serviceStrings []string, scm *service.Mgr) []*Service {
 		// Check against known RMMs
 		isRMMMatch := false
 		for _, rmm := range common.CommonRMMs {
+			if !isNonGenericToken(rmm) {
+				continue
+			}
 			rmmLower := strings.ToLower(rmm)
 			if strings.Contains(svcDisplayName, rmmLower) || strings.Contains(svcStartName, rmmLower) || strings.Contains(svcBinaryPath, rmmLower) {
 				isRMMMatch = true
@@ -59,15 +81,8 @@ func compareServices(serviceStrings []string, scm *service.Mgr) []*Service {
 			}
 		}
 
-		// Check for suspicious path regardless of RMM match
-		isPathSuspicious, pathReason := common.AnalyzeExecutablePath(config.BinaryPathName)
-
-		if isRMMMatch || isPathSuspicious {
-			description := config.Description
-			if isPathSuspicious {
-				description += fmt.Sprintf(" [%s]", pathReason)
-			}
-
+		// Only flag when there is a positive RMM vendor token match
+		if isRMMMatch {
 			fmt.Printf("      [?] Found %s\n", config.DisplayName)
 			suspiciousServices = append(suspiciousServices, &Service{
 				Name:             serviceString,
@@ -84,7 +99,7 @@ func compareServices(serviceStrings []string, scm *service.Mgr) []*Service {
 				Dependencies:     config.Dependencies,
 				ServiceStartName: config.ServiceStartName,
 				Password:         config.Password,
-				Description:      description,
+				Description:      config.Description,
 				SidType:          config.SidType,
 				DelayedAutoStart: config.DelayedAutoStart,
 			})
