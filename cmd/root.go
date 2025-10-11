@@ -7,6 +7,7 @@ import (
 	"rmm-hunter/internal/pkg/hunter"
 	"rmm-hunter/internal/tui"
 
+	scurvy "github.com/Kraken-OffSec/Scurvy"
 	"github.com/spf13/cobra"
 )
 
@@ -51,9 +52,26 @@ var huntCmd = &cobra.Command{
 var eliminateCmd = &cobra.Command{
 	Use:   "eliminate",
 	Short: "Eliminate Sus software based on hunt results",
-	Long: `Eliminate mode removes detected Sus software from the system.
-Requires a JSON input file containing hunt results to determine what to remove.`,
+	Long: `Eliminate mode removes detected RMM Software from the system.
+Requires a JSON input file containing hunt results to determine what to remove.
+Administrative Privileges are required. 
+Steps:
+- Click start
+- Type Powershell (see Windows Powershell)
+- Right click and select "Run as administrator"
+- Navigate to the directory containing rmm-hunter.exe 
+	> cd ~\Downloads\
+- Run the following command:
+	> CLI
+    	-> .\rmm-hunter.exe eliminate--cli
+	> Web
+    	-> .\rmm-hunter.exe eliminate --web
+`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if admin, err := scurvy.IsAdmin(); err != nil || !admin {
+			fmt.Println("User is not admin, please run as administrator")
+			os.Exit(1)
+		}
 		fmt.Println("Starting Elimination UI...")
 		runEliminate()
 	},

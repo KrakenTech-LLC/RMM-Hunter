@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"path/filepath"
+	"rmm-hunter/internal/pkg/hunt/eliminate"
 	"rmm-hunter/internal/suspicious"
 	"strings"
 )
@@ -101,7 +102,7 @@ func CheckDirectoryBlocked(dir string, data suspicious.Suspicious) error {
 	return nil
 }
 
-// Elimination placeholders; TODO: replace with internal/pkg/hunt/eliminate/*
+// Elimination functions
 var (
 	EliminateAutoRun       = func(ar suspicious.AutoRun) error { return eliminateAutoRun(ar) }
 	EliminateBinary        = func(path string) error { return eliminateBinary(path) }
@@ -113,11 +114,29 @@ var (
 )
 
 func eliminateAutoRun(ar suspicious.AutoRun) error {
-	return fmt.Errorf("eliminate autorun not implemented")
+	return eliminate.EliminateAutoRun(ar)
 }
-func eliminateBinary(path string) error                           { return nil }
-func eliminateConnection(conn suspicious.NetworkConnection) error { return nil }
-func eliminateDirectory(path string) error                        { return nil }
-func eliminateProcess(p suspicious.Process) error                 { return nil }
-func eliminateScheduledTask(t suspicious.ScheduledTask) error     { return nil }
-func eliminateService(s suspicious.Service) error                 { return nil }
+
+func eliminateBinary(path string) error {
+	return eliminate.EliminateBinary(path)
+}
+
+func eliminateConnection(conn suspicious.NetworkConnection) error {
+	return eliminate.EliminateConnection(conn.RemoteHost)
+}
+
+func eliminateDirectory(path string) error {
+	return eliminate.EliminateDirectory(path)
+}
+
+func eliminateProcess(p suspicious.Process) error {
+	return eliminate.EliminateProcess(p)
+}
+
+func eliminateScheduledTask(t suspicious.ScheduledTask) error {
+	return eliminate.EliminateScheduledTask(t)
+}
+
+func eliminateService(s suspicious.Service) error {
+	return eliminate.EliminateService(s)
+}
