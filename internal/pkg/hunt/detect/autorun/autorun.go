@@ -9,57 +9,21 @@ import (
 	"github.com/Kraken-OffSec/Scurvy/core/autoruns"
 )
 
-// basic allow/deny helpers kept local to keep changes scoped
-var systemDirs = []string{"\\windows\\system32\\", "\\windows\\syswow64\\", "\\windows\\", "\\program files\\windowsapps\\"}
-var safeSystemBinaries = []string{
-	"svchost.exe", "lsass.exe", "services.exe", "winlogon.exe", "explorer.exe",
-	"ctfmon.exe", "spoolsv.exe", "dwm.exe", "smss.exe", "csrss.exe",
-	"runtimebroker.exe", "shellexperiencehost.exe", "searchui.exe", "sihost.exe",
-	"taskhostw.exe", "wininit.exe", "rdpclip.exe",
-}
-var genericTokens = map[string]struct{}{
-	"remote": {}, "control": {}, "support": {}, "assist": {}, "viewer": {},
-	"server": {}, "service": {}, "manager": {}, "desktop": {}, "host": {},
-	"client": {}, "agent": {}, "connect": {}, "access": {}, "admin": {},
-	"vpn": {}, "ssh": {}, "vnc": {}, "rdp": {}, "microsoft": {}, "windows": {},
+// Whitelist for our own tool and legitimate system components
+var whitelist = []string{
+	"rmm-hunter",
 }
 
-func inSlice(slice []string, v string) bool {
-	v = strings.ToLower(v)
-	for _, s := range slice {
-		if strings.ToLower(s) == v {
+func isWhitelisted(ar AutoRun) bool {
+	allText := strings.ToLower(strings.Join([]string{
+		ar.ImageName, ar.ImagePath, ar.Entry, ar.LaunchString,
+	}, "|"))
+	for _, w := range whitelist {
+		if strings.Contains(allText, w) {
 			return true
 		}
 	}
 	return false
-}
-func containsAny(haystack string, needles []string) bool {
-	h := strings.ToLower(haystack)
-	for _, n := range needles {
-		if strings.Contains(h, strings.ToLower(n)) {
-			return true
-		}
-	}
-	return false
-}
-func isInSystemDir(p string) bool {
-	pl := strings.ToLower(p)
-	for _, d := range systemDirs {
-		if strings.Contains(pl, d) {
-			return true
-		}
-	}
-	return false
-}
-func isNonGenericToken(t string) bool {
-	t = strings.ToLower(strings.TrimSpace(t))
-	if len(t) < 4 {
-		return false
-	}
-	if _, ok := genericTokens[t]; ok {
-		return false
-	}
-	return true
 }
 
 func Detect() []AutoRun {
@@ -86,6 +50,11 @@ func Detect() []AutoRun {
 			LaunchString: ar.LaunchString,
 		}
 
+		// Skip whitelisted entries (our own tool)
+		if isWhitelisted(sar) {
+			continue
+		}
+
 		if isSuspiciousAutoRunEntry(sar) {
 			fmt.Printf("   [?] Found %s | %s | %s\n", sar.Location, sar.Entry, sar.ImagePath)
 			suspiciousAutoRuns = append(suspiciousAutoRuns, sar)
@@ -96,51 +65,107 @@ func Detect() []AutoRun {
 	return suspiciousAutoRuns
 }
 
-// isSuspiciousAutoRunEntry determines if an autorun appears to be an RMM by
-// checking image path/name, location, entry and launch string against
-// common RMM indicators and suspicious image suffixes. It also flags
-// suspicious installation paths.
+// isSuspiciousAutoRunEntry uses multi-Indicator scoring to detect RMMs
+// Requires at least 2 independent Indicators to flag as suspicious
+// Hash match alone is sufficient (high confidence)
 func isSuspiciousAutoRunEntry(ar AutoRun) bool {
-	// Build a single string of fields we care about
-	joined := strings.ToLower(strings.Join([]string{ar.ImageName, ar.ImagePath, ar.Entry, ar.LaunchString}, "|"))
+	score := 0
 
-	// 1) Vendor token hit (filter out generic words)
-	vendorHit := false
-	for _, tok := range common.CommonRMMs {
-		if !isNonGenericToken(tok) {
-			continue
+	// Build searchable text from all fields
+	allText := strings.ToLower(strings.Join([]string{
+		ar.ImageName, ar.ImagePath, ar.Entry, ar.LaunchString, ar.Location, ar.Arguments,
+	}, "|"))
+
+	// Indicator 0: Known RMM hash match (SHA256 or SHA1) - HIGHEST CONFIDENCE
+	// A hash match alone is sufficient to flag as suspicious
+	if ar.SHA256 != "" {
+		sha256Lower := strings.ToLower(ar.SHA256)
+		for _, hash := range common.CommonRMMHashes {
+			if strings.ToLower(hash) == sha256Lower {
+				return true // Hash match is definitive
+			}
 		}
-		if strings.Contains(joined, strings.ToLower(tok)) {
-			vendorHit = true
-			break
+	}
+	if ar.SHA1 != "" {
+		sha1Lower := strings.ToLower(ar.SHA1)
+		for _, hash := range common.CommonRMMHashesSHA1 {
+			if strings.ToLower(hash) == sha1Lower {
+				return true // Hash match is definitive
+			}
 		}
 	}
 
-	// 2) Known image suffix/file pattern hit (robust to registry naming)
-	suffixHit := false
+	// Indicator 1: Known RMM vendor name match (CommonRMMs)
+	rmmNameHit := false
+	for _, rmm := range common.CommonRMMs {
+		if strings.Contains(allText, strings.ToLower(rmm)) {
+			rmmNameHit = true
+			break
+		}
+	}
+	if rmmNameHit {
+		score++
+	}
+
+	// Indicator 2: Known RMM executable/binary pattern (CommonImageSuffixes)
+	binaryPatternHit := false
 	imgPathLower := strings.ToLower(ar.ImagePath)
 	imgNameLower := strings.ToLower(ar.ImageName)
-	for _, suf := range common.CommonImageSuffixes {
-		s := strings.ToLower(suf)
-		if strings.Contains(imgPathLower, s) || strings.Contains(imgNameLower, s) {
-			suffixHit = true
+	launchLower := strings.ToLower(ar.LaunchString)
+	for _, pattern := range common.CommonImageSuffixes {
+		patternLower := strings.ToLower(pattern)
+		if strings.Contains(imgPathLower, patternLower) ||
+			strings.Contains(imgNameLower, patternLower) ||
+			strings.Contains(launchLower, patternLower) {
+			binaryPatternHit = true
 			break
 		}
 	}
+	if binaryPatternHit {
+		score++
+	}
 
-	// 3) Known vendor DNS in launch string/command
+	// Indicator 3: Known RMM DNS/domain in command line or launch string (CommonDNS)
 	dnsHit := false
-	ls := strings.ToLower(ar.LaunchString)
-	for _, d := range common.CommonDNS {
-		if strings.Contains(ls, strings.ToLower(d)) {
-			dnsHit = true
-			break
+	argsLower := strings.ToLower(ar.Arguments)
+	for _, dns := range common.CommonDNS {
+		dnsLower := strings.ToLower(dns)
+		// Handle wildcard patterns: *.example.com should match anything.example.com
+		if strings.HasPrefix(dnsLower, "*.") {
+			// Match the domain suffix (e.g., ".example.com")
+			domainSuffix := dnsLower[1:] // Remove the * but keep the dot
+			if strings.Contains(launchLower, domainSuffix) || strings.Contains(argsLower, domainSuffix) {
+				dnsHit = true
+				break
+			}
+		} else if strings.HasSuffix(dnsLower, ".*") {
+			// Handle patterns like example.* - match the prefix
+			domainPrefix := dnsLower[:len(dnsLower)-2] // Remove the .*
+			if strings.Contains(launchLower, domainPrefix) || strings.Contains(argsLower, domainPrefix) {
+				dnsHit = true
+				break
+			}
+		} else {
+			// Exact domain match (no wildcard)
+			if strings.Contains(launchLower, dnsLower) || strings.Contains(argsLower, dnsLower) {
+				dnsHit = true
+				break
+			}
 		}
 	}
-
-	// Require two independent signals to reduce false positives
-	if (vendorHit && (suffixHit || dnsHit)) || (suffixHit && dnsHit) {
-		return true
+	if dnsHit {
+		score++
 	}
-	return false
+
+	// Indicator 4: Suspicious installation path (temp, public, programdata)
+	pathSuspicious, _ := common.AnalyzeExecutablePath(ar.ImagePath)
+	if !pathSuspicious && ar.LaunchString != "" {
+		pathSuspicious, _ = common.AnalyzeExecutablePath(ar.LaunchString)
+	}
+	if pathSuspicious {
+		score++
+	}
+
+	// Require at least 2 independent Indicator to reduce false positives
+	return score >= 2
 }

@@ -4,6 +4,10 @@ github.com/Kraken-OffSec/Scurvy v0.0.0-20251010192328-967933276439 h1:n/B4+1K6vp
 github.com/Kraken-OffSec/Scurvy v0.0.0-20251010192328-967933276439/go.mod h1:hljxQLLV5S60GVVG51+u3r1agCjZ45x8jd2WiJxy0wQ=
 github.com/Kraken-OffSec/Scurvy v0.0.0-20251011184544-e9265efd21c6 h1:CRH0t964ocRHXspOo8cB0DPcSfEtsGh8FenjML252HI=
 github.com/Kraken-OffSec/Scurvy v0.0.0-20251011184544-e9265efd21c6/go.mod h1:0pPwYHy+r8KGzXZ8vBgyYd6qy3vX+AMRo9XLiGc8WGE=
+github.com/Kraken-OffSec/Scurvy v0.0.0-20251011204529-faafd6327395 h1:5VcLiLUs33Hvqp5Jiyft+ZzzhfjTVb6fOB3MWiIDp1M=
+github.com/Kraken-OffSec/Scurvy v0.0.0-20251011204529-faafd6327395/go.mod h1:0pPwYHy+r8KGzXZ8vBgyYd6qy3vX+AMRo9XLiGc8WGE=
+github.com/Kraken-OffSec/Scurvy v0.0.0-20251011211525-6bf6bee1b100 h1:Om4wnKb+fpfYi3uRfc27Pz8uG/3CNrM2G3sSBwerSXA=
+github.com/Kraken-OffSec/Scurvy v0.0.0-20251011211525-6bf6bee1b100/go.mod h1:0pPwYHy+r8KGzXZ8vBgyYd6qy3vX+AMRo9XLiGc8WGE=
 github.com/alwindoss/morse v1.0.1 h1:PkUh5m1UHMcZ1Upvl7CmSIBMxdEBejWoQ4rQQtgJsCQ=
 github.com/alwindoss/morse v1.0.1/go.mod h1:qAqJOep3jEpIpiLgqSGgLk5Zh4BZKsyzMQHuAwVPMXc=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=

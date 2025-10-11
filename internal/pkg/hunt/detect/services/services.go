@@ -10,23 +10,21 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// ignore overly-generic tokens when matching vendor names
-var genericTokens = map[string]struct{}{
-	"remote": {}, "control": {}, "support": {}, "assist": {}, "viewer": {},
-	"server": {}, "service": {}, "manager": {}, "desktop": {}, "host": {},
-	"client": {}, "agent": {}, "connect": {}, "access": {}, "admin": {},
-	"vpn": {}, "ssh": {}, "vnc": {}, "rdp": {}, "microsoft": {}, "windows": {},
+// Whitelist for our own tool and legitimate system components
+var whitelist = []string{
+	"rmm-hunter",
 }
 
-func isNonGenericToken(t string) bool {
-	t = strings.ToLower(strings.TrimSpace(t))
-	if len(t) < 4 {
-		return false
+func isWhitelisted(config service.ServiceConfig) bool {
+	allText := strings.ToLower(strings.Join([]string{
+		config.DisplayName, config.ServiceStartName, config.BinaryPathName, config.Description,
+	}, "|"))
+	for _, w := range whitelist {
+		if strings.Contains(allText, w) {
+			return true
+		}
 	}
-	if _, ok := genericTokens[t]; ok {
-		return false
-	}
-	return true
+	return false
 }
 
 func Detect() []*Service {
@@ -64,25 +62,13 @@ func compareServices(serviceStrings []string, scm *service.Mgr) []*Service {
 			fmt.Printf("         [>-] Error getting service config %s: %s\n", serviceString, err.Error())
 			continue
 		}
-		svcStartName := strings.ToLower(config.ServiceStartName)
-		svcDisplayName := strings.ToLower(config.DisplayName)
-		svcBinaryPath := strings.ToLower(config.BinaryPathName)
 
-		// Check against known RMMs
-		isRMMMatch := false
-		for _, rmm := range common.CommonRMMs {
-			if !isNonGenericToken(rmm) {
-				continue
-			}
-			rmmLower := strings.ToLower(rmm)
-			if strings.Contains(svcDisplayName, rmmLower) || strings.Contains(svcStartName, rmmLower) || strings.Contains(svcBinaryPath, rmmLower) {
-				isRMMMatch = true
-				break
-			}
+		// Skip whitelisted services (our own tool)
+		if isWhitelisted(config) {
+			continue
 		}
 
-		// Only flag when there is a positive RMM vendor token match
-		if isRMMMatch {
+		if isSuspiciousService(config) {
 			fmt.Printf("      [?] Found %s\n", config.DisplayName)
 			suspiciousServices = append(suspiciousServices, &Service{
 				Name:             serviceString,
@@ -108,6 +94,83 @@ func compareServices(serviceStrings []string, scm *service.Mgr) []*Service {
 
 	fmt.Printf("[+] Found %d Suspicious Services\n", len(suspiciousServices))
 	return suspiciousServices
+}
+
+// isSuspiciousService uses multi-indicator scoring to detect RMM services
+// Requires at least 2 independent indicators to flag as suspicious
+func isSuspiciousService(config service.ServiceConfig) bool {
+	score := 0
+
+	// Build searchable text from all service fields
+	allText := strings.ToLower(strings.Join([]string{
+		config.DisplayName, config.ServiceStartName, config.BinaryPathName, config.Description,
+	}, "|"))
+
+	// Indicator 1: Known RMM vendor name match (CommonRMMs)
+	rmmNameHit := false
+	for _, rmm := range common.CommonRMMs {
+		if strings.Contains(allText, strings.ToLower(rmm)) {
+			rmmNameHit = true
+			break
+		}
+	}
+	if rmmNameHit {
+		score++
+	}
+
+	// Indicator 2: Known RMM executable/binary pattern in service binary path (CommonImageSuffixes)
+	binaryPatternHit := false
+	binaryPathLower := strings.ToLower(config.BinaryPathName)
+	for _, pattern := range common.CommonImageSuffixes {
+		patternLower := strings.ToLower(pattern)
+		if strings.Contains(binaryPathLower, patternLower) {
+			binaryPatternHit = true
+			break
+		}
+	}
+	if binaryPatternHit {
+		score++
+	}
+
+	// Indicator 3: Known RMM DNS/domain in binary path or description (CommonDNS)
+	dnsHit := false
+	for _, dns := range common.CommonDNS {
+		dnsLower := strings.ToLower(dns)
+		// Handle wildcard patterns: *.example.com should match anything.example.com
+		if strings.HasPrefix(dnsLower, "*.") {
+			// Match the domain suffix (e.g., ".example.com")
+			domainSuffix := dnsLower[1:] // Remove the * but keep the dot
+			if strings.Contains(allText, domainSuffix) {
+				dnsHit = true
+				break
+			}
+		} else if strings.HasSuffix(dnsLower, ".*") {
+			// Handle patterns like example.* - match the prefix
+			domainPrefix := dnsLower[:len(dnsLower)-2] // Remove the .*
+			if strings.Contains(allText, domainPrefix) {
+				dnsHit = true
+				break
+			}
+		} else {
+			// Exact domain match (no wildcard)
+			if strings.Contains(allText, dnsLower) {
+				dnsHit = true
+				break
+			}
+		}
+	}
+	if dnsHit {
+		score++
+	}
+
+	// Indicator 4: Suspicious installation path (temp, public, programdata)
+	pathSuspicious, _ := common.AnalyzeExecutablePath(config.BinaryPathName)
+	if pathSuspicious {
+		score++
+	}
+
+	// Require at least 2 independent Indicators to reduce false positives
+	return score >= 2
 }
 
 func getServiceType(raw uint32) string {

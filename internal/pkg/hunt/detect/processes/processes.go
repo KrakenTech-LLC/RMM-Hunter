@@ -9,6 +9,23 @@ import (
 	"github.com/Kraken-OffSec/Scurvy/core/process"
 )
 
+// Whitelist for our own tool and legitimate system components
+var whitelist = []string{
+	"rmm-hunter",
+}
+
+func isWhitelisted(proc process.Process) bool {
+	allText := strings.ToLower(strings.Join([]string{
+		proc.Executable(), proc.Path(),
+	}, "|"))
+	for _, w := range whitelist {
+		if strings.Contains(allText, w) {
+			return true
+		}
+	}
+	return false
+}
+
 func Detect() []Process {
 	fmt.Printf("[*] Enumerating Processes \n")
 
@@ -27,6 +44,11 @@ func compareProcesses(processes []process.Process) []Process {
 	var suspiciousProcesses []Process
 
 	for _, proc := range processes {
+		// Skip whitelisted processes (our own tool)
+		if isWhitelisted(proc) {
+			continue
+		}
+
 		procName := proc.Executable()
 		procNameLower := strings.ToLower(procName)
 
