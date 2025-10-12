@@ -228,5 +228,5 @@ For issues, questions, or feature requests, please open an issue on the GitHub r
 
 ## Any.Run Submission
 v1.2.0: https://app.any.run/tasks/03b6afcd-308c-4056-bafc-e6514185d922
-![](.img/any.run.graph.svg)
+![](.img/any.run.graph.png)
 
