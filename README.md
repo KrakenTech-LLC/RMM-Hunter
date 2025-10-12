@@ -226,3 +226,6 @@ For issues, questions, or feature requests, please open an issue on the GitHub r
 
 **Note**: The underlying Scurvy repository is a custom low-level OS exploitation framework that is not publicly accessible and is maintained privately.
 
+## Any.Run Submission
+v1.2.0: https://app.any.run/tasks/03b6afcd-308c-4056-bafc-e6514185d922
+
