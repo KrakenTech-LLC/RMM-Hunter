@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RMM Hunter Web UI</title>
+  <style>
+    :root{
+      --bg:#0b0f0c; --bg2:#111612; --panel:#0f1511; --accent:#17e46e; --accent2:#0eea5a; --muted:#a7b5a9; --text:#e6f4ea; --danger:#ff5c7a; --warn:#ffd166;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#070a08);color:var(--text)}
+    a{color:var(--accent)}
+    header{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);background:rgba(11,15,12,.8);border-bottom:1px solid #0d2015}
+    .nav{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:10px 16px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
+    .brand img{width:36px;height:36px;object-fit:contain}
+    .spacer{flex:1}
+    .nav a.btn{display:inline-block;padding:8px 12px;border:1px solid #134d2c;border-radius:8px;color:var(--text);text-decoration:none;transition:.15s}
+    .nav a.btn:hover{background:#0e1a13}
+    .nav a.primary{background:linear-gradient(180deg,#103e24,#0e351e);border-color:#1d7e4a}
+    .nav a.primary:hover{filter:brightness(1.1)}
+    main{max-width:1100px;margin:20px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    h1,h2{margin:10px 0}
+    .muted{color:var(--muted)}
+    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+    .pill{display:inline-flex;align-items:center;gap:6px;background:#0e1a13;border:1px solid #124b2b;border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
+    .log{background:#050805;border:1px solid #0c2819;border-radius:10px;padding:10px;height:220px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#b7f6c8}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid #124b2b;background:#0e1a13;color:var(--text)}
+    .btn:hover{filter:brightness(1.08)}
+    .btn.primary{background:linear-gradient(180deg,#0e351e,#0a2a18);border-color:#1d7e4a}
+    .danger{color:#fff;border-color:#4d121b;background:#1a0e10}
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #124b2b;color:var(--accent)}
+    .hidden{display:none}
+    footer{padding:16px 16px 40px;color:var(--muted);text-align:center}
+    .tooltip{border-bottom:1px dotted var(--muted);cursor:help}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="brand"><img src="/logo" alt="RMM Hunter"><span>RMM Hunter</span></div>
+      <span class="pill">A KrakenTech-LLC project</span>
+      <div class="spacer"></div>
+      <a href="#hunt" class="btn primary">Hunt</a>
+      <a href="#previous" class="btn">Use Previous Hunt</a>
+      <a href="#eliminate" class="btn">Eliminate</a>
+      <a id="quitBtn" class="btn danger">Quit</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="huntSection" class="card">
+      <h2>Hunt</h2>
+      <p class="muted">Click Start Hunt to scan for Remote Monitoring & Management (RMM) software. Progress logs will appear below in real-time.</p>
+      <div class="actions">
+        <button id="startHunt" class="btn primary">Start Hunt</button>
+        <span id="huntTag" class="tag hidden"></span>
+      </div>
+      <div id="log" class="log" aria-live="polite"></div>
+    </section>
+
+    <section id="previousSection" class="card">
+      <h2>Use Previous Hunt</h2>
+      <div id="hunts" class="grid"></div>
+    </section>
+
+    <section id="reportSection" class="card hidden">
+      <h2>Report</h2>
+      <div id="reportHeader"></div>
+      <div id="reportBody"></div>
+      <div class="actions">
+        <a href="#eliminate" class="btn">Proceed to Eliminate</a>
+      </div>
+    </section>
+
+    <section id="eliminateSection" class="card hidden">
+      <h2>Eliminate</h2>
+      <p class="muted">This section guides you through removing detected RMM software. For safety, elimination usually requires Administrator privileges. If you are unsure, please contact support.</p>
+      <ul>
+        <li>Review the Report to confirm detections.</li>
+        <li>We will add one-click elimination from here in a future update.</li>
+        <li>For now, you can use the CLI elimination UI: <code>rmm-hunter eliminate --cli</code></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <small>KrakenTech-LLC • RMM Hunter Web Interface</small>
+  </footer>
+
+<script>
+(function(){
+  const logEl = document.getElementById('log');
+  const huntsEl = document.getElementById('hunts');
+  const huntTag = document.getElementById('huntTag');
+  const reportSection = document.getElementById('reportSection');
+  const reportHeader = document.getElementById('reportHeader');
+  const reportBody = document.getElementById('reportBody');
+  const huntSection = document.getElementById('huntSection');
+  const previousSection = document.getElementById('previousSection');
+  const eliminateSection = document.getElementById('eliminateSection');
+
+  function route(){
+    const h = location.hash || '#hunt';
+    huntSection.classList.toggle('hidden', h!=='#hunt');
+    previousSection.classList.toggle('hidden', h!=='#previous');
+    eliminateSection.classList.toggle('hidden', h!=='#eliminate');
+  }
+  window.addEventListener('hashchange', route); route();
+
+  async function listHunts(){
+    huntsEl.innerHTML = '<div class="muted">Loading...</div>';
+    const r = await fetch('/api/hunts');
+    const data = await r.json();
+    if(!Array.isArray(data)||data.length===0){
+      huntsEl.innerHTML = '<div class="muted">No previous hunts found yet.</div>';
+      return;
+    }
+    huntsEl.innerHTML = '';
+    for(const it of data){
+      const card = document.createElement('div');
+      card.className='card';
+      card.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+        <strong>${it.reportName||it.file}</strong>
+        <span class="muted">Generated: ${it.generatedAt||'unknown'}</span>
+        <div class="actions"><button class="btn" data-file="${encodeURIComponent(it.file)}">Open Report</button></div>
+      </div>`;
+      card.querySelector('button').addEventListener('click',()=>openReport(it.file));
+      huntsEl.appendChild(card);
+    }
+  }
+
+  async function openReport(file){
+    const r = await fetch('/api/report?file='+encodeURIComponent(file));
+    const data = await r.json();
+    renderReport(data);
+    location.hash = '#report';
+  }
+
+  function renderReport(rep){
+    reportSection.classList.remove('hidden');
+    reportHeader.innerHTML = '';
+    reportBody.innerHTML = '';
+    const risk = rep.riskRating||{};
+    reportHeader.innerHTML = `<div class="pill">Risk: <strong style="color:${riskColor(risk.rating)}">${risk.rating||'N/A'}</strong> (${(risk.score??'-')}/10)</div>
+    <div class="muted">${escapeHTML(rep.riskRating?.summary||'')}</div>`;
+
+    const f = rep.findings||{};
+    const blocks = [
+      {id:'processes', title:'Processes', arr:f.processes, info:'Programs currently running on your computer.'},
+      {id:'services', title:'Services', arr:f.services, info:'Background components that start with Windows and run without windows.'},
+      {id:'connections', title:'Outbound Connections', arr:f.outboundConnections, info:'Network connections from your computer to the internet.'},
+      {id:'autoruns', title:'AutoRuns (Registry/Startup)', arr:f.autoRuns||f.autoruns, info:'Items that automatically start when Windows starts (often stored in the registry).'},
+      {id:'tasks', title:'Scheduled Tasks', arr:f.scheduledTasks, info:'Actions scheduled by Windows Task Scheduler.'},
+      {id:'binaries', title:'Binaries', arr:f.binaries, info:'Executable files found on disk.'},
+      {id:'directories', title:'Directories', arr:f.directories, info:'Folders where related files were found.'}
+    ];
+
+    for(const b of blocks){
+      const wrap = document.createElement('div');
+      wrap.className='card';
+      const count = Array.isArray(b.arr)?b.arr.length:0;
+      wrap.innerHTML = `<h3>${b.title} <span class="tag">${count}</span> <span class="tooltip" title="${b.info}">ⓘ</span></h3>`;
+      if(count===0){
+        wrap.innerHTML += '<div class="muted">No items found.</div>';
+      } else {
+        const list = document.createElement('div'); list.style.display='grid'; list.style.gap='8px';
+        for(const item of b.arr){ list.appendChild(renderItem(b.id,item)); }
+        wrap.appendChild(list);
+      }
+      reportBody.appendChild(wrap);
+    }
+  }
+
+  function renderItem(kind, item){
+    const d = document.createElement('div'); d.className='card'; d.style.margin='0';
+    const esc = escapeHTML;
+    if(kind==='processes'){
+      d.innerHTML = `<strong>${esc(item.name||'')}</strong><div class="muted">PID: ${item.pid} • Path: ${esc(item.path||'')}</div>`;
+    } else if(kind==='services'){
+      d.innerHTML = `<strong>${esc(item.displayName||item.name||'')}</strong><div class="muted">Start: ${esc(item.startType||'')} • Bin: ${esc(item.binaryPathName||'')}</div>`;
+    } else if(kind==='connections'){
+      d.innerHTML = `<strong>${esc(item.process||'')}</strong><div class="muted">${esc(item.localAddr||'')} → ${esc(item.remoteAddr||'')} (${esc(item.remoteHost||'')})</div>`;
+    } else if(kind==='autoruns'){
+      d.innerHTML = `<strong>${esc(item.name||item.imageName||'')}</strong><div class="muted">${esc(item.location||item.type||'')} • ${esc(item.command||item.imagePath||'')}</div>`;
+    } else if(kind==='tasks'){
+      d.innerHTML = `<strong>${esc(item.name||'')}</strong><div class="muted">State: ${esc(item.state||'')} • Next: ${esc(item.nextRun||'')}</div>`;
+    } else if(kind==='binaries'){
+      d.innerHTML = `<div>${esc(item.path||'')}</div>`;
+    } else if(kind==='directories'){
+      d.innerHTML = `<div>${esc(item.path||'')}</div>`;
+    }
+    return d;
+  }
+
+  function escapeHTML(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  function riskColor(r){ if(!r) return '#5a6'; r=(r+"").toLowerCase(); if(r==='high')return '#ff5c7a'; if(r==='medium')return '#ffd166'; if(r==='low')return '#17e46e'; return '#5a6'; }
+
+  // Hunt flow
+  document.getElementById('startHunt').addEventListener('click', async ()=>{
+    logEl.textContent=''; huntTag.classList.add('hidden');
+    let ws;
+    try{ ws = new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host+'/ws/hunt');
+      ws.onmessage = ev => { logEl.textContent += ev.data + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+    }catch(e){ console.error(e); }
+    const r = await fetch('/api/hunt/start',{method:'POST'});
+    const data = await r.json();
+    if(data && data.reportName){
+      huntTag.textContent = 'Report: '+data.reportName+'.json';
+      huntTag.classList.remove('hidden');
+      // Load report
+      const rep = await (await fetch('/api/report?file='+encodeURIComponent(data.reportName+'.json'))).json();
+      renderReport(rep); location.hash = '#report';
+    }
+    if(ws) ws.close();
+    listHunts();
+  });
+
+  document.getElementById('quitBtn').addEventListener('click', async ()=>{
+    await fetch('/api/quit',{method:'POST'});
+  });
+
+  listHunts();
+})();
+</script>
+</body>
+</html>
+
