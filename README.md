@@ -21,7 +21,7 @@ The hunt module performs deep system analysis across multiple detection vectors:
 - **Network Connection Monitoring** - Identifies active outbound connections to known RMM infrastructure
 - **Scheduled Task Detection** - Discovers RMM-related scheduled tasks used for persistence
 - **Directory Scanning** - Searches for RMM installation directories and artifacts
-- **AutoRun Analysis** - Searches for RMM persistence using Windows AutoRuns utilzing COM Services and Registry Keys
+- **AutoRun Analysis** - Searches for RMM persistence via Windows AutoRuns utilzing COM Services and Registry Keys
 
 
 ![](.gif/sample_hunt.gif)
