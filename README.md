@@ -2,7 +2,7 @@
 
 A comprehensive Windows security tool designed to detect and analyze Remote Monitoring and Management (RMM) software deployments.
 
-![](.img/banner-metadata.png)
+![](.img/rmm-hunter.png)
 
 ## Overview
 
