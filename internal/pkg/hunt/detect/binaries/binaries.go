@@ -5,12 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"rmm-hunter/internal/pkg/hunt/detect/common"
+	. "rmm-hunter/internal/suspicious"
 	"strings"
 	"sync"
 )
 
-func Detect() []string {
-	var foundBinaries []string
+func Detect() []Binary {
+	var foundBinaries []Binary
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -52,7 +53,7 @@ func Detect() []string {
 	// Collect results
 	for result := range resultChan {
 		mu.Lock()
-		foundBinaries = append(foundBinaries, result)
+		foundBinaries = append(foundBinaries, Binary{Path: result})
 		mu.Unlock()
 		fmt.Printf("      [?] Found %s\n", result)
 	}

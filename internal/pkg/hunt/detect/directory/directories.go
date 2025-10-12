@@ -5,13 +5,14 @@ import (
 	"os"
 	"path/filepath"
 	"rmm-hunter/internal/pkg/hunt/detect/common"
+	. "rmm-hunter/internal/suspicious"
 	"strings"
 )
 
 var appData = os.Getenv("APPDATA")
 
-func Detect() []string {
-	var suspiciousDirectories []string
+func Detect() []Directory {
+	var suspiciousDirectories []Directory
 	seen := make(map[string]bool) // Prevent duplicates
 
 	fmt.Printf("[*] Enumerating Suspicious Directories \n")
@@ -26,7 +27,7 @@ func Detect() []string {
 			for _, match := range matches {
 				if !seen[match] {
 					fmt.Printf("   [?] Found %s\n", match)
-					suspiciousDirectories = append(suspiciousDirectories, match)
+					suspiciousDirectories = append(suspiciousDirectories, Directory{Path: match})
 					seen[match] = true
 				}
 			}
@@ -35,7 +36,7 @@ func Detect() []string {
 			if _, err := os.Stat(dir); err == nil {
 				if !seen[dir] {
 					fmt.Printf("   [?] Found %s\n", dir)
-					suspiciousDirectories = append(suspiciousDirectories, dir)
+					suspiciousDirectories = append(suspiciousDirectories, Directory{Path: dir})
 					seen[dir] = true
 				}
 			}

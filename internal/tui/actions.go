@@ -44,18 +44,27 @@ func exeFromCommand(cmd string) string {
 // CheckBinaryBlocked returns a WarnBlock if the path is in use by an active process or enabled+active service
 func CheckBinaryBlocked(path string, data suspicious.Suspicious) error {
 	np := normPath(path)
-	// active process: listed in data.Processes
+	// active process: listed in data.Processes (skip if already eliminated)
 	for _, p := range data.Processes {
+		if p.Eliminated {
+			continue // Skip eliminated processes
+		}
 		if normPath(p.Path) == np {
 			return WarnBlock{Reason: fmt.Sprintf("Binary in use by running process %s (PID %d). Eliminate the process first.", p.Name, p.PID)}
 		}
 	}
 	// enabled+active service: service uses this binary AND a running process exists for it
 	for _, s := range data.Services {
+		if s.Eliminated {
+			continue // Skip eliminated services
+		}
 		sp := normPath(exeFromCommand(s.BinaryPathName))
 		if sp == np && !strings.EqualFold(strings.TrimSpace(s.StartType), "disabled") {
 			// Is it active? infer by checking matching running process
 			for _, p := range data.Processes {
+				if p.Eliminated {
+					continue // Skip eliminated processes
+				}
 				if normPath(p.Path) == sp {
 					return WarnBlock{Reason: fmt.Sprintf("Binary used by active and enabled service %s. Stop/delete the service first.", s.Name)}
 				}
@@ -84,15 +93,24 @@ func CheckDirectoryBlocked(dir string, data suspicious.Suspicious) error {
 		return err == nil && rel != ".." && !strings.HasPrefix(rel, "../")
 	}
 	for _, p := range data.Processes {
+		if p.Eliminated {
+			continue // Skip eliminated processes
+		}
 		if inDir(p.Path) {
 			return WarnBlock{Reason: fmt.Sprintf("Directory contains running process %s (PID %d). Eliminate the process first.", p.Name, p.PID)}
 		}
 	}
 	for _, s := range data.Services {
+		if s.Eliminated {
+			continue // Skip eliminated services
+		}
 		sp := exeFromCommand(s.BinaryPathName)
 		if inDir(sp) && !strings.EqualFold(strings.TrimSpace(s.StartType), "disabled") {
 			// infer active via running process
 			for _, p := range data.Processes {
+				if p.Eliminated {
+					continue // Skip eliminated processes
+				}
 				if normPath(p.Path) == normPath(sp) {
 					return WarnBlock{Reason: fmt.Sprintf("Directory contains active and enabled service binary for %s. Stop/delete the service first.", s.Name)}
 				}

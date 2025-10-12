@@ -460,7 +460,7 @@ const htmlTemplate = `<!DOCTYPE html>
         {{if .Findings.Binaries}}
             {{range .Findings.Binaries}}
             <div class="item">
-                <div class="item-detail">{{.}}</div>
+                <div class="item-detail">{{.Path}}</div>
             </div>
             {{end}}
         {{else}}
@@ -479,7 +479,7 @@ const htmlTemplate = `<!DOCTYPE html>
         {{if .Findings.Directories}}
             {{range .Findings.Directories}}
             <div class="item">
-                <div class="item-detail">{{.}}</div>
+                <div class="item-detail">{{.Path}}</div>
             </div>
             {{end}}
         {{else}}

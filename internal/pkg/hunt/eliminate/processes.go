@@ -1,6 +1,8 @@
 package eliminate
 
 import (
+	"fmt"
+
 	. "rmm-hunter/internal/suspicious"
 
 	scurvy "github.com/Kraken-OffSec/Scurvy"
@@ -8,9 +10,16 @@ import (
 
 // EliminateProcess kills a process and removes its binary from the system
 func EliminateProcess(p Process) error {
-	err, proc := scurvy.FindProcessByPID(p.PID)
+	err, procs := scurvy.ListProcesses()
 	if err != nil {
 		return err
 	}
-	return proc.Kill()
+
+	for _, proc := range procs {
+		if proc.Pid() == p.PID {
+			return proc.Kill()
+		}
+	}
+
+	return fmt.Errorf("process %d not found", p.PID)
 }

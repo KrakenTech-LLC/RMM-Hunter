@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"io"
 
 	"rmm-hunter/internal/suspicious"
 
@@ -16,22 +17,60 @@ type ListSelectedMsg struct {
 	Index   int
 }
 
-type listItem struct{ title, desc string }
+type listItem struct {
+	title      string
+	desc       string
+	eliminated bool
+}
 
 func (i listItem) Title() string       { return i.title }
 func (i listItem) Description() string { return i.desc }
 func (i listItem) FilterValue() string { return i.title }
 
-type ListViewModel struct {
-	typeKey string
-	list    list.Model
-	header  string
-	// In the future we can add action status per-item
+// customDelegate is a custom list item delegate that renders eliminated items in green
+type customDelegate struct {
+	list.DefaultDelegate
 }
 
-func NewListView(typeKey string, sus suspicious.Suspicious, width, height int) ListViewModel {
-	delegate := list.NewDefaultDelegate()
-	delegate.ShowDescription = true
+func (d customDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
+	i, ok := item.(listItem)
+	if !ok {
+		d.DefaultDelegate.Render(w, m, index, item)
+		return
+	}
+
+	title := i.Title()
+	desc := i.Description()
+
+	// Style for eliminated items (green)
+	if i.eliminated {
+		titleStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
+		descStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
+
+		if index == m.Index() {
+			// Selected item - add background
+			titleStyle = titleStyle.Background(lipgloss.Color("240"))
+			descStyle = descStyle.Background(lipgloss.Color("240"))
+		}
+
+		fmt.Fprintf(w, "%s\n%s", titleStyle.Render("✓ "+title), descStyle.Render("  "+desc))
+	} else {
+		// Normal rendering for non-eliminated items
+		d.DefaultDelegate.Render(w, m, index, item)
+	}
+}
+
+type ListViewModel struct {
+	typeKey    string
+	list       list.Model
+	header     string
+	eliminated map[string]map[int]bool
+}
+
+func NewListView(typeKey string, sus suspicious.Suspicious, width, height int, eliminated map[string]map[int]bool) ListViewModel {
+	defaultDelegate := list.NewDefaultDelegate()
+	defaultDelegate.ShowDescription = true
+	delegate := customDelegate{DefaultDelegate: defaultDelegate}
 	l := list.New([]list.Item{}, delegate, 0, 0)
 	if width > 0 && height > 0 {
 		l.SetSize(width, height-2)
@@ -45,56 +84,63 @@ func NewListView(typeKey string, sus suspicious.Suspicious, width, height int) L
 	switch typeKey {
 	case "autoruns":
 		header = "Suspicious AutoRuns"
-		for _, ar := range sus.AutoRuns {
+		for i, ar := range sus.AutoRuns {
 			title := ar.ImageName
 			if title == "" {
 				title = ar.Entry
 			}
 			desc := fmt.Sprintf("%s (%s)", ar.ImagePath, ar.Location)
-			items = append(items, listItem{title: title, desc: desc})
+			isEliminated := eliminated[typeKey] != nil && eliminated[typeKey][i]
+			items = append(items, listItem{title: title, desc: desc, eliminated: isEliminated})
 		}
 	case "binaries":
 		header = "Suspicious Binaries"
-		for _, b := range sus.Binaries {
-			items = append(items, listItem{title: b, desc: "binary file"})
+		for i, b := range sus.Binaries {
+			isEliminated := eliminated[typeKey] != nil && eliminated[typeKey][i]
+			items = append(items, listItem{title: b.Path, desc: "binary file", eliminated: isEliminated})
 		}
 	case "connections":
 		header = "Suspicious Connections"
-		for _, c := range sus.OutboundConnections {
+		for i, c := range sus.OutboundConnections {
 			label := fmt.Sprintf("%s -> %s (%s)", c.LocalAddr, c.RemoteAddr, c.RemoteHost)
-			items = append(items, listItem{title: label, desc: fmt.Sprintf("PID %s %s", c.PID, c.Process)})
+			isEliminated := eliminated[typeKey] != nil && eliminated[typeKey][i]
+			items = append(items, listItem{title: label, desc: fmt.Sprintf("PID %s %s", c.PID, c.Process), eliminated: isEliminated})
 		}
 	case "directories":
 		header = "Suspicious Directories"
-		for _, d := range sus.Directories {
-			items = append(items, listItem{title: d, desc: "directory"})
+		for i, d := range sus.Directories {
+			isEliminated := eliminated[typeKey] != nil && eliminated[typeKey][i]
+			items = append(items, listItem{title: d.Path, desc: "directory", eliminated: isEliminated})
 		}
 	case "processes":
 		header = "Suspicious Processes"
-		for _, p := range sus.Processes {
+		for i, p := range sus.Processes {
 			label := fmt.Sprintf("%s (PID %d)", p.Name, p.PID)
 			desc := p.Path
-			items = append(items, listItem{title: label, desc: desc})
+			isEliminated := eliminated[typeKey] != nil && eliminated[typeKey][i]
+			items = append(items, listItem{title: label, desc: desc, eliminated: isEliminated})
 		}
 	case "scheduledTasks":
 		header = "Suspicious Scheduled Tasks"
-		for _, t := range sus.ScheduledTasks {
+		for i, t := range sus.ScheduledTasks {
 			label := t.Name
 			desc := t.Path
-			items = append(items, listItem{title: label, desc: desc})
+			isEliminated := eliminated[typeKey] != nil && eliminated[typeKey][i]
+			items = append(items, listItem{title: label, desc: desc, eliminated: isEliminated})
 		}
 	case "services":
 		header = "Suspicious Services"
-		for _, s := range sus.Services {
+		for i, s := range sus.Services {
 			label := fmt.Sprintf("%s (%s)", s.Name, s.DisplayName)
 			desc := s.BinaryPathName
-			items = append(items, listItem{title: label, desc: desc})
+			isEliminated := eliminated[typeKey] != nil && eliminated[typeKey][i]
+			items = append(items, listItem{title: label, desc: desc, eliminated: isEliminated})
 		}
 	}
 
 	l.Title = header + "  —  Left: Back  Enter: Details  q: Quit"
 	l.SetItems(items)
-	return ListViewModel{typeKey: typeKey, list: l, header: header}
+	return ListViewModel{typeKey: typeKey, list: l, header: header, eliminated: eliminated}
 }
 
 func (m ListViewModel) Init() tea.Cmd { return nil }
