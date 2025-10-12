@@ -108,7 +108,7 @@ func (m DetailViewModel) renderDetails() string {
 			return "Item no longer available"
 		}
 		c := m.data.OutboundConnections[m.index]
-		return fmt.Sprintf("Local: %s\nRemote: %s\nHost: %s\nState: %s\nPID: %s\nProcess: %s\nAction: add firewall block (placeholder)", c.LocalAddr, c.RemoteAddr, c.RemoteHost, c.State, c.PID, c.Process)
+		return fmt.Sprintf("Local: %s\nRemote: %s\nHost: %s\nState: %s\nPID: %s\nProcess: %s\nAction: add firewall block", c.LocalAddr, c.RemoteAddr, c.RemoteHost, c.State, c.PID, c.Process)
 	case "directories":
 		if m.index >= len(m.data.Directories) {
 			return "Item no longer available"
@@ -120,19 +120,19 @@ func (m DetailViewModel) renderDetails() string {
 			return "Item no longer available"
 		}
 		p := m.data.Processes[m.index]
-		return fmt.Sprintf("Name: %s\nPID: %d\nPPID: %d\nParent: %s\nArgs: %s\nCreated: %s\nPath: %s\nAction: stop then delete (placeholder)", p.Name, p.PID, p.PPID, p.Parent, p.Args, p.Created, p.Path)
+		return fmt.Sprintf("Name: %s\nPID: %d\nPPID: %d\nParent: %s\nArgs: %s\nCreated: %s\nPath: %s\nAction: stop then delete", p.Name, p.PID, p.PPID, p.Parent, p.Args, p.Created, p.Path)
 	case "scheduledTasks":
 		if m.index >= len(m.data.ScheduledTasks) {
 			return "Item no longer available"
 		}
 		t := m.data.ScheduledTasks[m.index]
-		return fmt.Sprintf("Name: %s\nAuthor: %s\nState: %s\nEnabled: %v\nLastResult: %s\nNextRun: %s\nLastRun: %s\nPath: %s\nAction: disable then delete (placeholder)", t.Name, t.Author, t.State, t.Enabled, t.LastResult, t.NextRun, t.LastRun, t.Path)
+		return fmt.Sprintf("Name: %s\nAuthor: %s\nState: %s\nEnabled: %v\nLastResult: %s\nNextRun: %s\nLastRun: %s\nPath: %s\nAction: disable then delete", t.Name, t.Author, t.State, t.Enabled, t.LastResult, t.NextRun, t.LastRun, t.Path)
 	case "services":
 		if m.index >= len(m.data.Services) {
 			return "Item no longer available"
 		}
 		s := m.data.Services[m.index]
-		return fmt.Sprintf("Name: %s\nDisplay: %s\nType: %s\nStartType: %s\nBinPath: %s\nStartName: %s\nDescription: %s\nAction: stop then delete (placeholder)", s.Name, s.DisplayName, s.ServiceType, s.StartType, s.BinaryPathName, s.ServiceStartName, s.Description)
+		return fmt.Sprintf("Name: %s\nDisplay: %s\nType: %s\nStartType: %s\nBinPath: %s\nStartName: %s\nDescription: %s\nAction: stop then delete", s.Name, s.DisplayName, s.ServiceType, s.StartType, s.BinaryPathName, s.ServiceStartName, s.Description)
 	}
 	return ""
 }

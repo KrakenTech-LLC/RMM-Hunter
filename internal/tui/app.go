@@ -185,7 +185,7 @@ func (m AppModel) View() string {
 	}
 }
 
-// performEliminate routes to placeholder eliminate functions without removing items from data
+// performEliminate routes to eliminate functions without removing items from data
 func (m *AppModel) performEliminate(typeKey string, idx int) error {
 	switch typeKey {
 	case "autoruns":
