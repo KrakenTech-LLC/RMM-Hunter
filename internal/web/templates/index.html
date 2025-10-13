@@ -14,6 +14,7 @@
       --bg:#0b0f0c; --bg2:#111612; --panel:#0f1511; --accent:#17e46e; --accent2:#0eea5a; --muted:#a7b5a9; --text:#e6f4ea; --danger:#ff5c7a; --warn:#ffd166;
     }
     *{box-sizing:border-box}
+    html{background:var(--bg)}
     body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#070a08);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 
     /* Scrollbar styling */
@@ -66,11 +67,15 @@
     .tree-node{cursor:pointer;padding:8px 10px;border-radius:6px;margin:4px 0;user-select:none;font-weight:600;color:var(--text);border:1px solid transparent}
     .tree-node:hover{background:#0e1a13;border-color:#124b2b}
     .tree-node.expanded{background:#0e1a13;border-color:#124b2b}
-    .tree-child{cursor:pointer;padding:6px 10px 6px 12px;border-radius:6px;margin:2px 0;font-size:13px;color:var(--muted);border:1px solid transparent;display:flex;align-items:center;gap:8px;transition:all 0.15s}
+    .tree-child{cursor:pointer;padding:6px 10px 6px 12px;border-radius:6px;margin:2px 0;font-size:13px;color:var(--muted);border:1px solid transparent;display:flex;align-items:center;gap:8px;transition:all 0.15s;position:relative;overflow:hidden}
     .tree-child:hover{background:#0a2a18;color:var(--text);border-color:#124b2b}
     .tree-child.selected{background:#103e24;color:var(--accent);border-color:#1d7e4a}
     .tree-child::before{content:'→';color:var(--accent);opacity:0;transition:opacity 0.15s}
     .tree-child:hover::before,.tree-child.selected::before{opacity:1}
+    .tree-child.eliminating{animation:slideOutRight 0.6s ease-in-out forwards}
+    .tree-child.eliminating::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(23,228,110,.3),transparent);animation:shimmer 0.6s ease-in-out}
+    @keyframes slideOutRight{0%{transform:translateX(0);opacity:1}50%{opacity:0.5}100%{transform:translateX(100%);opacity:0;height:0;margin:0;padding:0}}
+    @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
     .detail-field{margin:12px 0;padding:10px;background:#050805;border:1px solid #0c2819;border-radius:8px}
     .detail-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
     .detail-value{color:var(--text);font-size:14px;word-break:break-all}
@@ -102,6 +107,35 @@
     .splash-loader{width:200px;height:3px;background:rgba(23,228,110,.1);border-radius:3px;overflow:hidden;position:relative}
     .splash-loader::after{content:'';position:absolute;top:0;left:0;height:100%;width:40%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:loading 1.5s ease-in-out infinite}
     @keyframes loading{0%{left:-40%}100%{left:100%}}
+
+    /* Shutdown Screen */
+    #shutdownScreen{position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at center,#0f1511,#0b0f0c,#000);z-index:10000;display:none;flex-direction:column;align-items:center;justify-content:center}
+    #shutdownScreen.active{display:flex}
+    .spinner{width:80px;height:80px;border:4px solid rgba(23,228,110,.1);border-top:4px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:30px}
+    .spinner.hide{display:none}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+    .shutdown-title{font-size:28px;font-weight:700;color:var(--accent);margin-bottom:12px;letter-spacing:1.5px}
+    .shutdown-message{font-size:16px;color:var(--muted);margin-bottom:20px}
+    .shutdown-success{font-size:18px;color:var(--accent);font-weight:600;display:none}
+    .shutdown-success.show{display:block}
+
+    /* Modal */
+    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:10001;display:none;align-items:center;justify-content:center}
+    .modal.active{display:flex}
+    .modal-content{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:30px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+    .modal-icon{font-size:60px;text-align:center;margin-bottom:20px}
+    .modal-icon.success{color:var(--accent);animation:checkPop 0.5s ease-out}
+    .modal-icon.error{color:#ff5c7a}
+    @keyframes checkPop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .modal-title{font-size:24px;font-weight:700;text-align:center;margin-bottom:12px}
+    .modal-title.success{color:var(--accent)}
+    .modal-title.error{color:#ff5c7a}
+    .modal-message{text-align:center;color:var(--muted);margin-bottom:24px;line-height:1.6}
+    .modal-btn{width:100%;padding:14px;border:none;border-radius:8px;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s}
+    .modal-btn.success{background:var(--accent);color:#000}
+    .modal-btn.success:hover{filter:brightness(1.2)}
+    .modal-btn.error{background:rgba(255,92,122,.2);color:#ff5c7a;border:1px solid #ff5c7a}
+    .modal-btn.error:hover{background:rgba(255,92,122,.3)}
   </style>
 </head>
 <body>
@@ -111,6 +145,24 @@
     <div class="splash-title">RMM HUNTER</div>
     <div class="splash-subtitle">POWERED BY KRAKENTECH</div>
     <div class="splash-loader"></div>
+  </div>
+
+  <!-- Shutdown Screen -->
+  <div id="shutdownScreen">
+    <div class="spinner"></div>
+    <div class="shutdown-title">Shutting Down</div>
+    <div class="shutdown-message">RMM Hunter is closing...</div>
+    <div class="shutdown-success">✓ You can now close this browser tab</div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div id="modalIcon" class="modal-icon"></div>
+      <div id="modalTitle" class="modal-title"></div>
+      <div id="modalMessage" class="modal-message"></div>
+      <button id="modalBtn" class="modal-btn"></button>
+    </div>
   </div>
 
   <header>
@@ -132,6 +184,7 @@
       <div class="actions">
         <button id="startHunt" class="btn primary">Start Hunt</button>
         <span id="huntTag" class="tag hidden"></span>
+        <button id="viewReportBtn" class="btn hidden" style="margin-left:12px">View Report</button>
       </div>
       <div id="log" class="log" aria-live="polite"></div>
     </section>
@@ -206,6 +259,7 @@
   const logEl = document.getElementById('log');
   const huntsEl = document.getElementById('hunts');
   const huntTag = document.getElementById('huntTag');
+  const viewReportBtn = document.getElementById('viewReportBtn');
   const reportSection = document.getElementById('reportSection');
   const reportHeader = document.getElementById('reportHeader');
   const reportBody = document.getElementById('reportBody');
@@ -350,27 +404,93 @@
   }
 
   // Hunt flow
+  let lastReportData = null;
+  let currentReportName = null;
+
   document.getElementById('startHunt').addEventListener('click', async ()=>{
-    logEl.textContent=''; huntTag.classList.add('hidden');
+    logEl.textContent='';
+    huntTag.classList.add('hidden');
+    viewReportBtn.classList.add('hidden');
+    currentReportName = null;
+
     let ws;
-    try{ ws = new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host+'/ws/hunt');
-      ws.onmessage = ev => { logEl.textContent += ev.data + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+    let wsReady = false;
+    let huntComplete = false;
+
+    try{
+      ws = new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host+'/ws/hunt');
+      ws.onopen = () => { wsReady = true; };
+      ws.onmessage = ev => {
+        logEl.textContent += ev.data + '\n';
+        logEl.scrollTop = logEl.scrollHeight;
+
+        // Check if hunt is complete
+        if (ev.data.includes('[+] Hunt complete')) {
+          huntComplete = true;
+        }
+      };
     }catch(e){ console.error(e); }
+
+    // Wait for WebSocket to be ready before starting hunt
+    while(!wsReady && ws && ws.readyState !== WebSocket.OPEN) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    // Give it a tiny bit more time to ensure connection is stable
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     const r = await fetch('/api/hunt/start',{method:'POST'});
     const data = await r.json();
+
     if(data && data.reportName){
+      currentReportName = data.reportName;
+
+      // Wait for hunt to actually complete
+      while(!huntComplete) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
       huntTag.classList.remove('hidden');
       await typeText(huntTag, 'Report: '+data.reportName+'.json', 30);
+
       // Load report
       const rep = await (await fetch('/api/report?file='+encodeURIComponent(data.reportName+'.json'))).json();
-      renderReport(rep); location.hash = '#report';
+      lastReportData = rep;
+      renderReport(rep);
+
+      // Show View Report button AFTER everything is loaded
+      viewReportBtn.classList.remove('hidden');
     }
     if(ws) ws.close();
     listHunts();
   });
 
+  // View Report button handler
+  viewReportBtn.addEventListener('click', () => {
+    if (lastReportData) {
+      location.hash = '#report';
+    }
+  });
+
   document.getElementById('quitBtn').addEventListener('click', async ()=>{
-    await fetch('/api/quit',{method:'POST'});
+    // Show shutdown screen
+    const shutdownScreen = document.getElementById('shutdownScreen');
+    const spinner = shutdownScreen.querySelector('.spinner');
+    const shutdownSuccess = shutdownScreen.querySelector('.shutdown-success');
+    shutdownScreen.classList.add('active');
+
+    // Send quit request
+    try {
+      await fetch('/api/quit',{method:'POST'});
+    } catch(e) {
+      // Server is shutting down, connection will be lost
+    }
+
+    // After 2 seconds, hide spinner and show success message
+    setTimeout(() => {
+      spinner.classList.add('hide');
+      shutdownSuccess.classList.add('show');
+    }, 2000);
   });
 
   listHunts();
@@ -631,11 +751,123 @@
     }).join('');
   }
 
-  window.eliminateItem = function(type, idx) {
+  // Modal functions
+  const modal = document.getElementById('modal');
+  const modalIcon = document.getElementById('modalIcon');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalBtn = document.getElementById('modalBtn');
+
+  function showModal(type, title, message) {
+    modal.classList.add('active');
+    modalIcon.className = `modal-icon ${type}`;
+    modalTitle.className = `modal-title ${type}`;
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+    modalBtn.className = `modal-btn ${type}`;
+    modalBtn.textContent = 'OK';
+
+    if (type === 'success') {
+      modalIcon.textContent = '✓';
+    } else {
+      modalIcon.textContent = '✕';
+    }
+
+    modalBtn.onclick = () => {
+      modal.classList.remove('active');
+    };
+  }
+
+  window.eliminateItem = async function(type, idx) {
     if (!confirm(`Are you sure you want to eliminate this ${type.slice(0, -1)}?\n\nThis action cannot be undone.`)) return;
 
-    alert('Elimination functionality not yet implemented in web UI.\n\nPlease use the CLI: rmm-hunter eliminate --cli');
-    // TODO: Implement API call to backend elimination endpoint
+    if (!currentReport) {
+      showModal('error', 'Error', 'No report loaded');
+      return;
+    }
+
+    // Get the report filename from the current report
+    const reportFile = currentReport.reportName || currentReport.name || 'rmm-hunter-report.json';
+
+    // Find the tree child element for this item
+    const treeChildren = document.querySelectorAll('.tree-child');
+    let targetElement = null;
+
+    // Find the element by matching the index and type
+    treeChildren.forEach((child, childIdx) => {
+      const parentNode = child.previousElementSibling;
+      if (parentNode && parentNode.classList.contains('tree-node')) {
+        // Check if this is the right category
+        const categoryText = parentNode.textContent.toLowerCase();
+        if ((type === 'connections' && categoryText.includes('outbound')) ||
+            (type === 'processes' && categoryText.includes('processes')) ||
+            (type === 'services' && categoryText.includes('services')) ||
+            (type === 'tasks' && categoryText.includes('scheduled')) ||
+            (type === 'autoruns' && categoryText.includes('autorun')) ||
+            (type === 'binaries' && categoryText.includes('binaries')) ||
+            (type === 'directories' && categoryText.includes('directories'))) {
+          // This is the right category, now check index
+          const siblings = Array.from(child.parentElement.children).filter(c => c.classList.contains('tree-child'));
+          const itemIdx = siblings.indexOf(child);
+          if (itemIdx === idx) {
+            targetElement = child;
+          }
+        }
+      }
+    });
+
+    try {
+      const response = await fetch('/api/eliminate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reportFile: reportFile,
+          type: type,
+          index: idx
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        showModal('error', 'Elimination Failed', result.error || 'Unknown error occurred');
+        return;
+      }
+
+      // Success! Trigger slide-out animation
+      if (targetElement) {
+        targetElement.classList.add('eliminating');
+
+        // Wait for animation to complete before updating tree
+        setTimeout(async () => {
+          // Show success modal
+          showModal('success', 'Successfully Eliminated', `The ${type.slice(0, -1)} has been removed from your system.`);
+
+          // Reload the report to get updated data
+          const updatedReport = await (await fetch('/api/report?file=' + encodeURIComponent(reportFile))).json();
+          currentReport = updatedReport;
+
+          // Reload elimination tree with updated data
+          loadEliminationData(updatedReport);
+
+          // Clear the center and wiki panels
+          elimCenter.innerHTML = '<div class="empty-state">Select an item from the tree</div>';
+          elimWiki.innerHTML = '<div class="empty-state">Item details will appear here</div>';
+        }, 600); // Match animation duration
+      } else {
+        // Fallback if element not found
+        showModal('success', 'Successfully Eliminated', `The ${type.slice(0, -1)} has been removed from your system.`);
+
+        const updatedReport = await (await fetch('/api/report?file=' + encodeURIComponent(reportFile))).json();
+        currentReport = updatedReport;
+        loadEliminationData(updatedReport);
+        elimCenter.innerHTML = '<div class="empty-state">Select an item from the tree</div>';
+        elimWiki.innerHTML = '<div class="empty-state">Item details will appear here</div>';
+      }
+
+    } catch (error) {
+      showModal('error', 'Error', `Failed to eliminate: ${error.message}`);
+    }
   };
 
   // Update renderReport to also load elimination data

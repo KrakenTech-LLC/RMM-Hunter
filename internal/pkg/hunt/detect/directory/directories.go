@@ -10,49 +10,56 @@ import (
 )
 
 var appData = os.Getenv("APPDATA")
+var userProfile = os.Getenv("USERPROFILE")
 
 func Detect() []Directory {
 	var suspiciousDirectories []Directory
 	seen := make(map[string]bool) // Prevent duplicates
 
 	fmt.Printf("[*] Enumerating Suspicious Directories \n")
-	// Check for common directories
-	for _, dir := range common.CommonDirectories {
-		dir = replaceAppData(dir)
 
-		// Check if this is a prefix pattern (ends with incomplete path such as Screen Connect "C:\Program Files (x86)\ScreenConnect Client (")
-		if isPrefix(dir) {
-			// Find all directories matching this prefix
-			matches := findPrefixMatches(dir)
-			for _, match := range matches {
-				if !seen[match] {
-					fmt.Printf("   [?] Found %s\n", match)
-					suspiciousDirectories = append(suspiciousDirectories, Directory{Path: match})
-					seen[match] = true
+	// For each known RMM directory, check in all base paths
+	for _, rmmDir := range common.KnownRMMDirectories {
+		for _, basePath := range common.SearchBasePaths {
+			// Replace environment variables
+			basePath = replaceEnvVars(basePath)
+
+			// Construct full path
+			fullPath := filepath.Join(basePath, rmmDir)
+
+			// Check if this is a prefix pattern (ends with incomplete path like "ScreenConnect Client (")
+			if isPrefix(rmmDir) {
+				// Find all directories matching this prefix
+				matches := findPrefixMatches(fullPath)
+				for _, match := range matches {
+					if !seen[match] {
+						fmt.Printf("   [?] Found %s\n", match)
+						suspiciousDirectories = append(suspiciousDirectories, Directory{Path: match})
+						seen[match] = true
+					}
 				}
-			}
-		} else {
-			// Exact match
-			if _, err := os.Stat(dir); err == nil {
-				if !seen[dir] {
-					fmt.Printf("   [?] Found %s\n", dir)
-					suspiciousDirectories = append(suspiciousDirectories, Directory{Path: dir})
-					seen[dir] = true
+			} else {
+				// Exact match
+				if _, err := os.Stat(fullPath); err == nil {
+					if !seen[fullPath] {
+						fmt.Printf("   [?] Found %s\n", fullPath)
+						suspiciousDirectories = append(suspiciousDirectories, Directory{Path: fullPath})
+						seen[fullPath] = true
+					}
 				}
 			}
 		}
 	}
+
 	fmt.Printf("[+] Found %d Suspicious Directories\n", len(suspiciousDirectories))
 
 	return suspiciousDirectories
 }
 
-// replaceAppData replaces {{APPDATA}} with the actual APPDATA path
-func replaceAppData(path string) string {
-	if strings.Contains(path, "{{APPDATA}}") {
-		p := strings.Replace(path, "{{APPDATA}}", "", -1)
-		return filepath.Join(appData, p)
-	}
+// replaceEnvVars replaces environment variable placeholders with actual paths
+func replaceEnvVars(path string) string {
+	path = strings.ReplaceAll(path, "{{APPDATA}}", appData)
+	path = strings.ReplaceAll(path, "{{USERPROFILE}}", userProfile)
 	return path
 }
 

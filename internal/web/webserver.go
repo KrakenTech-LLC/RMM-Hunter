@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"rmm-hunter/internal/suspicious"
 	"strings"
 	"sync"
 	"time"
 
 	"rmm-hunter/internal/pkg"
+	"rmm-hunter/internal/pkg/hunt/eliminate"
 	"rmm-hunter/internal/pkg/hunter"
 
 	"github.com/gorilla/websocket"
@@ -76,6 +78,7 @@ func StartWebServer() {
 	mux.HandleFunc("/api/hunts", s.handleListHunts)
 	mux.HandleFunc("/api/hunt/start", s.handleStartHunt)
 	mux.HandleFunc("/api/report", s.handleGetReport)
+	mux.HandleFunc("/api/eliminate", s.handleEliminate)
 	mux.HandleFunc("/api/quit", s.handleQuit)
 	mux.HandleFunc("/ws/hunt", s.handleWS)
 
@@ -103,7 +106,8 @@ func StartWebServer() {
 	<-serverReady
 	time.Sleep(500 * time.Millisecond) // Give server a moment to fully initialize
 	log.Printf("[web] Opening browser to %s...\n", browserURL)
-	if err := OpenBrowser(browserURL); err != nil {
+	_, err := OpenBrowser(browserURL)
+	if err != nil {
 		log.Printf("[web] Warning: Failed to open browser: %v\n", err)
 		if !hostAdded {
 			log.Printf("[web] Please open your browser and navigate to http://127.0.0.1\n")
@@ -290,6 +294,61 @@ func (s *server) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *server) handleEliminate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		ReportFile string `json:"reportFile"`
+		Type       string `json:"type"`
+		Index      int    `json:"index"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Load the report file
+	reportPath := filepath.Join(".", req.ReportFile)
+	data, err := os.ReadFile(reportPath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to read report: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var report suspicious.Suspicious
+	if err := json.Unmarshal(data, &report); err != nil {
+		http.Error(w, fmt.Sprintf("failed to parse report: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Perform elimination based on type
+	if err := performElimination(&report, req.Type, req.Index); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	// Save updated report
+	updatedData, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal report: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if err := os.WriteFile(reportPath, updatedData, 0644); err != nil {
+		http.Error(w, fmt.Sprintf("failed to save report: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
 func (s *server) handleQuit(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "use POST", 405)
@@ -298,4 +357,188 @@ func (s *server) handleQuit(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(`{"ok":true}`))
 	go func() { time.Sleep(200 * time.Millisecond); s.quitCh <- struct{}{} }()
+}
+
+// performElimination executes the elimination logic for a specific finding type and index
+func performElimination(report *suspicious.Suspicious, typeKey string, idx int) error {
+	switch typeKey {
+	case "connections":
+		if idx >= len(report.OutboundConnections) {
+			return fmt.Errorf("invalid index")
+		}
+		conn := report.OutboundConnections[idx]
+		if err := eliminate.EliminateConnection(conn.RemoteHost); err != nil {
+			return err
+		}
+		report.OutboundConnections[idx].Eliminated = true
+
+	case "processes":
+		if idx >= len(report.Processes) {
+			return fmt.Errorf("invalid index")
+		}
+		proc := report.Processes[idx]
+		if err := eliminate.EliminateProcess(proc); err != nil {
+			return err
+		}
+		report.Processes[idx].Eliminated = true
+
+	case "services":
+		if idx >= len(report.Services) {
+			return fmt.Errorf("invalid index")
+		}
+		svc := report.Services[idx]
+		if svc == nil {
+			return fmt.Errorf("service is nil")
+		}
+		if err := eliminate.EliminateService(*svc); err != nil {
+			return err
+		}
+		report.Services[idx].Eliminated = true
+
+	case "tasks":
+		if idx >= len(report.ScheduledTasks) {
+			return fmt.Errorf("invalid index")
+		}
+		task := report.ScheduledTasks[idx]
+		if task == nil {
+			return fmt.Errorf("task is nil")
+		}
+		if err := eliminate.EliminateScheduledTask(*task); err != nil {
+			return err
+		}
+		report.ScheduledTasks[idx].Eliminated = true
+
+	case "autoruns":
+		if idx >= len(report.AutoRuns) {
+			return fmt.Errorf("invalid index")
+		}
+		ar := report.AutoRuns[idx]
+		if err := eliminate.EliminateAutoRun(ar); err != nil {
+			return err
+		}
+		report.AutoRuns[idx].Eliminated = true
+
+	case "binaries":
+		if idx >= len(report.Binaries) {
+			return fmt.Errorf("invalid index")
+		}
+		bin := report.Binaries[idx]
+		// Check if binary is blocked by active processes/services
+		if err := checkBinaryBlocked(bin.Path, *report); err != nil {
+			return err
+		}
+		if err := eliminate.EliminateBinary(bin.Path); err != nil {
+			return err
+		}
+		report.Binaries[idx].Eliminated = true
+
+	case "directories":
+		if idx >= len(report.Directories) {
+			return fmt.Errorf("invalid index")
+		}
+		dir := report.Directories[idx]
+		// Check if directory is blocked by active processes/services
+		if err := checkDirectoryBlocked(dir.Path, *report); err != nil {
+			return err
+		}
+		if err := eliminate.EliminateDirectory(dir.Path); err != nil {
+			return err
+		}
+		report.Directories[idx].Eliminated = true
+
+	default:
+		return fmt.Errorf("unknown type: %s", typeKey)
+	}
+
+	return nil
+}
+
+// checkBinaryBlocked checks if a binary is in use by active processes or services
+func checkBinaryBlocked(path string, data suspicious.Suspicious) error {
+	normPath := func(p string) string {
+		return strings.ToLower(filepath.Clean(p))
+	}
+
+	np := normPath(path)
+
+	// Check active processes
+	for _, p := range data.Processes {
+		if p.Eliminated {
+			continue
+		}
+		if normPath(p.Path) == np {
+			return fmt.Errorf("binary in use by running process %s (PID %d). Eliminate the process first", p.Name, p.PID)
+		}
+	}
+
+	// Check enabled services
+	for _, s := range data.Services {
+		if s == nil || s.Eliminated {
+			continue
+		}
+		sp := normPath(s.BinaryPathName)
+		if sp == np && !strings.EqualFold(strings.TrimSpace(s.StartType), "disabled") {
+			// Check if service has a running process
+			for _, p := range data.Processes {
+				if p.Eliminated {
+					continue
+				}
+				if normPath(p.Path) == sp {
+					return fmt.Errorf("binary used by active and enabled service %s. Stop/delete the service first", s.Name)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// checkDirectoryBlocked checks if a directory contains binaries used by active processes or services
+func checkDirectoryBlocked(dir string, data suspicious.Suspicious) error {
+	normPath := func(p string) string {
+		return strings.ToLower(filepath.Clean(p))
+	}
+
+	dn := normPath(dir)
+	if !strings.HasSuffix(dn, string(filepath.Separator)) {
+		dn += string(filepath.Separator)
+	}
+
+	inDir := func(p string) bool {
+		pp := normPath(p)
+		if pp == "" {
+			return false
+		}
+		return strings.HasPrefix(pp, dn)
+	}
+
+	// Check processes
+	for _, p := range data.Processes {
+		if p.Eliminated {
+			continue
+		}
+		if inDir(p.Path) {
+			return fmt.Errorf("directory contains active process %s (PID %d). Eliminate the process first", p.Name, p.PID)
+		}
+	}
+
+	// Check services
+	for _, s := range data.Services {
+		if s == nil || s.Eliminated {
+			continue
+		}
+		if inDir(s.BinaryPathName) && !strings.EqualFold(strings.TrimSpace(s.StartType), "disabled") {
+			// Check if service has a running process
+			for _, p := range data.Processes {
+				if p.Eliminated {
+					continue
+				}
+				if normPath(p.Path) == normPath(s.BinaryPathName) {
+					return fmt.Errorf("directory contains active and enabled service binary for %s. Stop/delete the service first", s.Name)
+				}
+			}
+		}
+	}
+
+	return nil
 }
