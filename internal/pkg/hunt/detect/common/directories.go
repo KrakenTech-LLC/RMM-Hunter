@@ -1,78 +1,128 @@
 package common
 
-var CommonDirectories = []string{
-	`C:\Program Files (x86)%\mRemoteNG`,
-	`C:\\Program Files (x86)\Sysprogs`,
-	`C:\\Program Files (x86)\Sysprogs\SmarTTY`,
-	`C:\AlpemixSrvc`,
-	`C:\Downloads\SuperPuTTY`,
-	`C:\Program Files (x86)\Almageste\DragonDisk`,
-	`C:\Program Files (x86)\AnyDesk`,
-	`C:\Program Files (x86)\AnyViewer`,
-	`C:\Program Files (x86)\Atera Networks`,
-	`C:\Program Files (x86)\Bitvise SSH Client`,
-	`C:\Program Files (x86)\Bluetrait Agent`,
-	`C:\Program Files (x86)\DesktopCentral_Agent`,
-	`C:\Program Files (x86)\DesktopCentral_Agent\bin`,
-	`C:\Program Files (x86)\GoTo Opener`,
-	`C:\Program Files (x86)\GoToMyPC`,
-	`C:\Program Files (x86)\Google\Chrome Remote Desktop`,
-	`C:\Program Files (x86)\ISL Online`,
-	`C:\Program Files (x86)\Kaseya`,
-	`C:\Program Files (x86)\LANDesk`,
-	`C:\Program Files (x86)\OnionShare`,
-	`C:\Program Files (x86)\NetSarang`,
-	`C:\Program Files (x86)\NetSarang\xShell`,
-	`C:\Program Files (x86)\PJ Technologies`,
-	`C:\Program Files (x86)\PJ Technologies\GOVsrv`,
-	`C:\Program Files (x86)\Radmin Viewer 3`,
-	`C:\Program Files (x86)\RemotePC`,
-	`C:\Program Files (x86)\S3 Browser`,
-	`C:\Program Files (x86)\ScreenConnect Client (`, // C:\Program Files (x86)\ScreenConnect Client (<string ID>)
-	`C:\Program Files (x86)\SmartFTP Client`,
-	`C:\Program Files (x86)\Splashtop`,
-	`C:\Program Files (x86)\TeamViewer`,
-	`C:\Program Files (x86)\UltraViewer`,
-	`C:\Program Files (x86)\Xpra`,
-	`C:\Program Files (x86)\Yandex`,
-	`C:\Program Files (x86)\mRemoteNG`,
-	`C:\Program Files\ATERA NETWORKS`,
-	`C:\Program Files\ATERA NETWORKS\AteraAgent`,
-	`C:\Program Files\AnyDesk`,
-	`C:\Program Files\Bitvise SSH Server`,
-	`C:\Program Files\Danware Data\NetOp Packn Deploy`,
-	`C:\Program Files\Level`,
-	`C:\\Program Files\\LiteManager Pro`,
-	`C:\\Program Files\\LiteManager Pro \u2013 Viewer`,
-	`C:\Program Files\ManageEngine\ManageEngine Free Tools`,
-	`C:\Program Files\ManageEngine\ManageEngine Free Tools\Launcher`,
-	`C:\Program Files\RealVNC`,
-	`C:\Program Files\RealVNC\VNC Serve`,
-	`C:\Program Files\Remote Utilities`,
-	`C:\Program Files\Remote Utilities\Agent`,
-	`C:\Program Files\Solar-Putty-v4`,
-	`C:\Program Files\SolarWinds\Dameware Mini Remote Control`,
-	`C:\Program Files\SysAidServer`,
-	`C:\Program Files\TeamViewer`,
-	`C:\Program Files\TightVNC`,
-	`C:\Program Files\ZOC8`,
-	`C:\Program Files\uvnc bvba`,
-	`C:\Program Files\uvnc bvba\UltraVNC`,
-	`C:\ProgramData\Kaseya`,
-	`C:\ProgramData\Total Software Deployment`,
-	`C:\ProgramFiles\GoTo Machine Installer`,
-	`C:\ProgramFiles (x86)\GoTo Machine Installer`,
-	`{{APPDATA}}\Local\Google\Chrome\User Data\Default\Extensions\iodihamcpbpeioajjeobimgagajmlibd`,
-	`{{APPDATA}}\Local\MEGAsync`,
-	`{{APPDATA}}\Roaming\Mikogo`,
-	`{{APPDATA}}\Roaming\SyncTrayzor`,
-	`C:\Users\IEUser\Downloads\WinSCP-5.21.6-Portable`,
-	`C:\Users\USERNAME\AppData\Roaming\Insync`,
-	`C:\Users\USERNAME\AppData\Roaming\Insync\App`,
-	`C:\Windows\Action1`,
-	`C:\Windows\SysWOW64\rserver30`,
-	`C:\Windows\SysWOW64\rserver30\FamItrfc`,
-	`C:\Windows\SysWOW64\rserver30\FamItrf2`,
-	`C:\Windows\dwrcs`,
-	`C:\ProgramData\AMMYY`,
+// KnownRMMDirectories contains known directory names/paths
+// These will be searched in common installation locations defined in SearchBasePaths
+var KnownRMMDirectories = []string{
+	// A
+	`Action1`,
+	`Almageste\DragonDisk`,
+	`AlpemixSrvc`,
+	`AMMYY`,
+	`AnyDesk`,
+	`AnyViewer`,
+	`Atera Networks`,
+	`ATERA NETWORKS`,
+	`ATERA NETWORKS\AteraAgent`,
+
+	// B
+	`Bitvise SSH Client`,
+	`Bitvise SSH Server`,
+	`Bluetrait Agent`,
+
+	// D
+	`Danware Data\NetOp Packn Deploy`,
+	`DesktopCentral_Agent`,
+	`DesktopCentral_Agent\bin`,
+
+	// G
+	`GoTo Opener`,
+	`GoTo Machine Installer`,
+	`GoToMyPC`,
+	`Google\Chrome Remote Desktop`,
+	`Google\Chrome\User Data\Default\Extensions\iodihamcpbpeioajjeobimgagajmlibd`,
+
+	// I
+	`Insync`,
+	`Insync\App`,
+	`ISL Online`,
+
+	// K
+	`Kaseya`,
+
+	// L
+	`LANDesk`,
+	`Level`,
+	`LiteManager Pro`,
+	`LiteManager Pro – Viewer`,
+
+	// M
+	`ManageEngine\ManageEngine Free Tools`,
+	`ManageEngine\ManageEngine Free Tools\Launcher`,
+	`MEGAsync`,
+	`Mikogo`,
+	`mRemoteNG`,
+
+	// N
+	`NetSarang`,
+	`NetSarang\xShell`,
+
+	// O
+	`OnionShare`,
+
+	// P
+	`PJ Technologies`,
+	`PJ Technologies\GOVsrv`,
+
+	// R
+	`Radmin Viewer 3`,
+	`RealVNC`,
+	`RealVNC\VNC Serve`,
+	`Remote Utilities`,
+	`Remote Utilities\Agent`,
+	`RemotePC`,
+	`RustDesk`,
+
+	// S
+	`S3 Browser`,
+	`ScreenConnect Client (`, // Prefix pattern for ScreenConnect Client (<string ID>)
+	`SmartFTP Client`,
+	`Solar-Putty-v4`,
+	`SolarWinds\Dameware Mini Remote Control`,
+	`Splashtop`,
+	`SuperPuTTY`,
+	`SyncTrayzor`,
+	`Sysprogs`,
+	`Sysprogs\SmarTTY`,
+	`SysAidServer`,
+	`SysWOW64\rserver30`,
+	`SysWOW64\rserver30\FamItrfc`,
+	`SysWOW64\rserver30\FamItrf2`,
+
+	// T
+	`TeamViewer`,
+	`TightVNC`,
+	`Total Software Deployment`,
+
+	// U
+	`UltraViewer`,
+	`uvnc bvba`,
+	`uvnc bvba\UltraVNC`,
+
+	// W
+	`WinSCP-5.21.6-Portable`,
+	`dwrcs`,
+
+	// X
+	`Xpra`,
+
+	// Y
+	`Yandex`,
+
+	// Z
+	`ZOC8`,
+}
+
+// SearchBasePaths defines the base directories to search within
+var SearchBasePaths = []string{
+	`C:\Program Files`,
+	`C:\Program Files (x86)`,
+	`C:\ProgramData`,
+	`C:\ProgramFiles`,       // Installers variant 1
+	`C:\ProgramFiles (x86)`, // Installers variant 2
+	`C:\Windows`,
+	`{{APPDATA}}\Local`,
+	`{{APPDATA}}\Roaming`,
+	`{{USERPROFILE}}\Downloads`,
+	`C:\Downloads`, // Standard downloads location
+	`C:\`,          // Root for edge cases (AlpemixSrvc)
 }

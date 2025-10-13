@@ -6,6 +6,7 @@ import (
 	"rmm-hunter/internal/pkg"
 	"rmm-hunter/internal/pkg/hunter"
 	"rmm-hunter/internal/tui"
+	"rmm-hunter/internal/web"
 
 	scurvy "github.com/Kraken-OffSec/Scurvy"
 	"github.com/Kraken-OffSec/Scurvy/core/escalator"
@@ -145,9 +146,8 @@ func runHunt() {
 
 func runEliminate() {
 	if webUI {
-		// Launch the web UI for elimination flow
-		// TODO: Launch web UI
-		fmt.Println("Web UI not implemented yet")
+		fmt.Println("Starting Web UI on http://127.0.0.1:8080 ...")
+		web.StartWebServer()
 		return
 	} else if cliUI {
 		// Launch the TUI for elimination flow
