@@ -4,48 +4,122 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RMM Hunter Web UI</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
   <style>
     :root{
       --bg:#0b0f0c; --bg2:#111612; --panel:#0f1511; --accent:#17e46e; --accent2:#0eea5a; --muted:#a7b5a9; --text:#e6f4ea; --danger:#ff5c7a; --warn:#ffd166;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#070a08);color:var(--text)}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#070a08);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+    /* Custom scrollbar styling */
+    *::-webkit-scrollbar{width:12px;height:12px}
+    *::-webkit-scrollbar-track{background:#050805;border-radius:10px}
+    *::-webkit-scrollbar-thumb{background:#124b2b;border-radius:10px;border:2px solid #050805}
+    *::-webkit-scrollbar-thumb:hover{background:#17e46e}
+    *::-webkit-scrollbar-corner{background:#050805}
+    /* Firefox scrollbar */
+    *{scrollbar-width:thin;scrollbar-color:#124b2b #050805}
     a{color:var(--accent)}
-    header{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);background:rgba(11,15,12,.8);border-bottom:1px solid #0d2015}
-    .nav{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:10px 16px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
-    .brand img{width:36px;height:36px;object-fit:contain}
+    header{position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(11,15,12,.95);border-bottom:1px solid rgba(23,228,110,.15);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+    .nav{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:8px;padding:12px 24px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.5px;font-size:16px;color:var(--text)}
+    .brand img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(23,228,110,.3))}
     .spacer{flex:1}
-    .nav a.btn{display:inline-block;padding:8px 12px;border:1px solid #134d2c;border-radius:8px;color:var(--text);text-decoration:none;transition:.15s}
-    .nav a.btn:hover{background:#0e1a13}
-    .nav a.primary{background:linear-gradient(180deg,#103e24,#0e351e);border-color:#1d7e4a}
-    .nav a.primary:hover{filter:brightness(1.1)}
-    main{max-width:1100px;margin:20px auto;padding:0 16px}
-    .card{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .nav a.btn{display:inline-flex;align-items:center;padding:10px 18px;border:none;border-radius:6px;color:var(--text);text-decoration:none;transition:all .2s;font-weight:500;font-size:14px;position:relative;overflow:hidden}
+    .nav a.btn::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(23,228,110,.1),rgba(23,228,110,.05));opacity:0;transition:opacity .2s}
+    .nav a.btn:hover::before{opacity:1}
+    .nav a.btn:hover{background:rgba(23,228,110,.08);transform:translateY(-1px)}
+    .nav a.primary{background:linear-gradient(135deg,#17e46e,#0eea5a);color:#000;font-weight:600;box-shadow:0 4px 12px rgba(23,228,110,.25)}
+    .nav a.primary:hover{box-shadow:0 6px 20px rgba(23,228,110,.4);transform:translateY(-2px)}
+    .nav a.danger{background:rgba(255,92,122,.1);color:#ff5c7a}
+    .nav a.danger:hover{background:rgba(255,92,122,.2)}
+    main{max-width:1100px;margin:20px auto;padding:0 16px;flex:1;width:100%}
+    main.full-width{max-width:none;padding:0 20px}
+    .card{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.25);overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;overflow:hidden}
     h1,h2{margin:10px 0}
     .muted{color:var(--muted)}
-    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-    .pill{display:inline-flex;align-items:center;gap:6px;background:#0e1a13;border:1px solid #124b2b;border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
-    .log{background:#050805;border:1px solid #0c2819;border-radius:10px;padding:10px;height:220px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#b7f6c8}
+    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));min-height:400px}
+    .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(23,228,110,.08);border:1px solid rgba(23,228,110,.2);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--accent);font-weight:500}
+    .log{background:#050805;border:1px solid #0c2819;border-radius:10px;padding:10px;height:calc(100vh - 400px);min-height:400px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#b7f6c8;white-space:pre-wrap;word-wrap:break-word}
     .actions{display:flex;gap:10px;flex-wrap:wrap}
     .btn{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid #124b2b;background:#0e1a13;color:var(--text)}
     .btn:hover{filter:brightness(1.08)}
     .btn.primary{background:linear-gradient(180deg,#0e351e,#0a2a18);border-color:#1d7e4a}
     .danger{color:#fff;border-color:#4d121b;background:#1a0e10}
-    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #124b2b;color:var(--accent)}
+    .tag{display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(23,228,110,.3);background:rgba(23,228,110,.08);color:var(--accent);font-weight:500;font-size:13px}
+    .typing{overflow:hidden;white-space:nowrap;display:inline-block;border-right:2px solid var(--accent);animation:blink 0.7s step-end infinite}
+    @keyframes blink{0%,100%{border-color:var(--accent)}50%{border-color:transparent}}
     .hidden{display:none}
-    footer{padding:16px 16px 40px;color:var(--muted);text-align:center}
+    footer{padding:20px 16px;color:var(--muted);text-align:center;font-size:13px;border-top:1px solid #0d2015;margin-top:auto}
+    .footer-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:#0e1a13;border:1px solid #124b2b;color:var(--accent);transition:all 0.2s ease;text-decoration:none}
+    .footer-icon:hover{background:#103e24;border-color:#1d7e4a;color:var(--accent2);transform:translateY(-2px)}
     .tooltip{border-bottom:1px dotted var(--muted);cursor:help}
+    .elim-layout{display:grid;grid-template-columns:280px 1fr 320px;gap:16px;height:calc(100vh - 200px);min-height:600px}
+    .elim-tree{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:12px;overflow-y:auto}
+    .elim-center{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:20px;overflow-y:auto;display:flex;flex-direction:column}
+    .elim-wiki{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:16px;overflow-y:auto}
+    .tree-node{cursor:pointer;padding:8px 10px;border-radius:6px;margin:4px 0;user-select:none;font-weight:600;color:var(--text);border:1px solid transparent}
+    .tree-node:hover{background:#0e1a13;border-color:#124b2b}
+    .tree-node.expanded{background:#0e1a13;border-color:#124b2b}
+    .tree-child{cursor:pointer;padding:6px 10px 6px 12px;border-radius:6px;margin:2px 0;font-size:13px;color:var(--muted);border:1px solid transparent;display:flex;align-items:center;gap:8px;transition:all 0.15s}
+    .tree-child:hover{background:#0a2a18;color:var(--text);border-color:#124b2b}
+    .tree-child.selected{background:#103e24;color:var(--accent);border-color:#1d7e4a}
+    .tree-child::before{content:'→';color:var(--accent);opacity:0;transition:opacity 0.15s}
+    .tree-child:hover::before,.tree-child.selected::before{opacity:1}
+    .detail-field{margin:12px 0;padding:10px;background:#050805;border:1px solid #0c2819;border-radius:8px}
+    .detail-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+    .detail-value{color:var(--text);font-size:14px;word-break:break-all}
+    .order-badge{display:inline-block;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;margin-bottom:12px;width:fit-content}
+    .order-1{background:#1a0e10;color:#ff5c7a;border:1px solid #4d121b}
+    .order-2{background:#1a1510;color:#ffd166;border:1px solid #4d3b12}
+    .order-3{background:#0e1a13;color:#17e46e;border:1px solid #124b2b}
+    .wiki-section{margin-bottom:20px}
+    .wiki-title{font-weight:600;color:var(--accent);margin-bottom:8px;font-size:15px}
+    .wiki-text{color:var(--muted);font-size:13px;line-height:1.6}
+    .wiki-list{margin:8px 0;padding-left:20px;color:var(--muted);font-size:13px}
+    .wiki-list li{margin:4px 0}
+    .elim-btn{width:fit-content;align-self:center;margin-top:auto;padding:16px 32px;background:rgba(255,92,122,.08);border:1px solid rgba(255,92,122,.3);color:#ff5c7a;border-radius:8px;cursor:pointer;font-weight:600;font-size:15px;transition:all 0.25s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px}
+    .elim-btn::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(255,92,122,.15),rgba(255,92,122,.05));opacity:0;transition:opacity 0.25s}
+    .elim-btn:hover{background:rgba(255,92,122,.15);border-color:#ff5c7a;transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,92,122,.3)}
+    .elim-btn:hover::before{opacity:1}
+    .elim-btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(255,92,122,.2)}
+    .elim-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+    .elim-btn-icon{font-size:18px}
+    .empty-state{text-align:center;padding:40px;color:var(--muted)}
+
+    /* Splash Screen */
+    #splash{position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at center,#0f1511,#0b0f0c,#000);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:1;transition:opacity 0.5s ease-out}
+    #splash.fade-out{opacity:0;pointer-events:none}
+    .splash-logo{width:180px;height:180px;margin-bottom:30px;animation:logoFloat 3s ease-in-out infinite;filter:drop-shadow(0 0 40px rgba(23,228,110,.6))}
+    @keyframes logoFloat{0%,100%{transform:translateY(0px)}50%{transform:translateY(-15px)}}
+    .splash-title{font-size:32px;font-weight:700;color:var(--accent);margin-bottom:12px;letter-spacing:2px;text-shadow:0 0 20px rgba(23,228,110,.5)}
+    .splash-subtitle{font-size:14px;color:var(--muted);letter-spacing:1px;margin-bottom:40px}
+    .splash-loader{width:200px;height:3px;background:rgba(23,228,110,.1);border-radius:3px;overflow:hidden;position:relative}
+    .splash-loader::after{content:'';position:absolute;top:0;left:0;height:100%;width:40%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:loading 1.5s ease-in-out infinite}
+    @keyframes loading{0%{left:-40%}100%{left:100%}}
   </style>
 </head>
 <body>
+  <!-- Splash Screen -->
+  <div id="splash">
+    <img src="/logo" alt="RMM Hunter" class="splash-logo">
+    <div class="splash-title">RMM HUNTER</div>
+    <div class="splash-subtitle">POWERED BY KRAKENTECH</div>
+    <div class="splash-loader"></div>
+  </div>
+
   <header>
     <div class="nav">
       <div class="brand"><img src="/logo" alt="RMM Hunter"><span>RMM Hunter</span></div>
-      <span class="pill">A KrakenTech-LLC project</span>
+      <span class="pill">KrakenTech LLC</span>
       <div class="spacer"></div>
       <a href="#hunt" class="btn primary">Hunt</a>
-      <a href="#previous" class="btn">Use Previous Hunt</a>
+      <a href="#previous" class="btn">Previous Hunts</a>
       <a href="#eliminate" class="btn">Eliminate</a>
       <a id="quitBtn" class="btn danger">Quit</a>
     </div>
@@ -72,27 +146,63 @@
       <div id="reportHeader"></div>
       <div id="reportBody"></div>
       <div class="actions">
-        <a href="#eliminate" class="btn">Proceed to Eliminate</a>
+        <a href="#eliminate" class="btn primary">Proceed to Eliminate</a>
       </div>
     </section>
 
-    <section id="eliminateSection" class="card hidden">
-      <h2>Eliminate</h2>
-      <p class="muted">This section guides you through removing detected RMM software. For safety, elimination usually requires Administrator privileges. If you are unsure, please contact support.</p>
-      <ul>
-        <li>Review the Report to confirm detections.</li>
-        <li>We will add one-click elimination from here in a future update.</li>
-        <li>For now, you can use the CLI elimination UI: <code>rmm-hunter eliminate --cli</code></li>
-      </ul>
+    <section id="eliminateSection" class="hidden">
+      <h2 style="margin:0 0 16px 0">Eliminate Detected Items</h2>
+      <div id="elimContent" class="elim-layout">
+        <div class="elim-tree" id="elimTree">
+          <div class="empty-state">Load a report first</div>
+        </div>
+        <div class="elim-center" id="elimCenter">
+          <div class="empty-state">Select an item from the tree</div>
+        </div>
+        <div class="elim-wiki" id="elimWiki">
+          <div class="empty-state">Item details will appear here</div>
+        </div>
+      </div>
     </section>
   </main>
 
   <footer>
-    <small>KrakenTech-LLC • RMM Hunter Web Interface</small>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+      <div style="font-weight:600;font-size:15px;color:var(--text)">KrakenTech LLC</div>
+      <div style="font-size:13px;color:var(--muted)">RMM Hunter Web Interface</div>
+      <div style="display:flex;gap:16px;align-items:center">
+        <a href="https://github.com/KrakenTech-LLC/RMM-Hunter" target="_blank" rel="noopener" class="footer-icon" title="View on GitHub">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+        </a>
+        <a href="https://krakensec.tech" target="_blank" rel="noopener" class="footer-icon" title="Visit KrakenTech Website">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM5.78 8.75a9.64 9.64 0 0 0 1.363 4.177c.255.426.542.832.857 1.215.245-.296.551-.705.857-1.215A9.64 9.64 0 0 0 10.22 8.75Zm4.44-1.5a9.64 9.64 0 0 0-1.363-4.177c-.307-.51-.612-.919-.857-1.215a9.927 9.927 0 0 0-.857 1.215A9.64 9.64 0 0 0 5.78 7.25Zm-5.944 1.5H1.543a6.507 6.507 0 0 0 4.666 5.5c-.123-.181-.24-.365-.352-.552-.715-1.192-1.437-2.874-1.581-4.948Zm-2.733-1.5h2.733c.144-2.074.866-3.756 1.58-4.948.12-.197.237-.381.353-.552a6.507 6.507 0 0 0-4.666 5.5Zm10.181 1.5c-.144 2.074-.866 3.756-1.58 4.948-.12.197-.237.381-.353.552a6.507 6.507 0 0 0 4.666-5.5Zm2.733-1.5a6.507 6.507 0 0 0-4.666-5.5c.123.181.24.365.353.552.714 1.192 1.436 2.874 1.58 4.948Z"/>
+          </svg>
+        </a>
+        <a href="mailto:ehosinski@krakensec.tech" class="footer-icon" title="Contact Us">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
   </footer>
 
 <script>
 (function(){
+  // Splash screen
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      const splash = document.getElementById('splash');
+      splash.classList.add('fade-out');
+      setTimeout(function() {
+        splash.style.display = 'none';
+      }, 500);
+    }, 1500); // Show splash for 1.5 seconds
+  });
+
   const logEl = document.getElementById('log');
   const huntsEl = document.getElementById('hunts');
   const huntTag = document.getElementById('huntTag');
@@ -105,9 +215,22 @@
 
   function route(){
     const h = location.hash || '#hunt';
+    const mainEl = document.querySelector('main');
+
     huntSection.classList.toggle('hidden', h!=='#hunt');
     previousSection.classList.toggle('hidden', h!=='#previous');
+    reportSection.classList.toggle('hidden', h!=='#report');
     eliminateSection.classList.toggle('hidden', h!=='#eliminate');
+
+    // Make eliminate page full-width
+    mainEl.classList.toggle('full-width', h==='#eliminate');
+
+    // If navigating to eliminate without a loaded report, show helpful message
+    if (h === '#eliminate' && !currentReport) {
+      elimTree.innerHTML = '<div class="empty-state">No report loaded.<br><br>Please run a hunt or load a previous report first.</div>';
+      elimCenter.innerHTML = '<div class="empty-state">Load a report to see elimination options</div>';
+      elimWiki.innerHTML = '<div class="empty-state">Select an item to see details</div>';
+    }
   }
   window.addEventListener('hashchange', route); route();
 
@@ -141,14 +264,16 @@
   }
 
   function renderReport(rep){
-    reportSection.classList.remove('hidden');
     reportHeader.innerHTML = '';
     reportBody.innerHTML = '';
     const risk = rep.riskRating||{};
     reportHeader.innerHTML = `<div class="pill">Risk: <strong style="color:${riskColor(risk.rating)}">${risk.rating||'N/A'}</strong> (${(risk.score??'-')}/10)</div>
     <div class="muted">${escapeHTML(rep.riskRating?.summary||'')}</div>`;
 
-    const f = rep.findings||{};
+    const f = rep.findings||rep||{};
+    console.log('Report data:', rep);
+    console.log('Findings:', f);
+    console.log('Binaries:', f.binaries);
     const blocks = [
       {id:'processes', title:'Processes', arr:f.processes, info:'Programs currently running on your computer.'},
       {id:'services', title:'Services', arr:f.services, info:'Background components that start with Windows and run without windows.'},
@@ -168,7 +293,10 @@
         wrap.innerHTML += '<div class="muted">No items found.</div>';
       } else {
         const list = document.createElement('div'); list.style.display='grid'; list.style.gap='8px';
-        for(const item of b.arr){ list.appendChild(renderItem(b.id,item)); }
+        for(const item of b.arr){
+          console.log(`Rendering ${b.id}:`, item);
+          list.appendChild(renderItem(b.id,item));
+        }
         wrap.appendChild(list);
       }
       reportBody.appendChild(wrap);
@@ -185,19 +313,41 @@
     } else if(kind==='connections'){
       d.innerHTML = `<strong>${esc(item.process||'')}</strong><div class="muted">${esc(item.localAddr||'')} → ${esc(item.remoteAddr||'')} (${esc(item.remoteHost||'')})</div>`;
     } else if(kind==='autoruns'){
-      d.innerHTML = `<strong>${esc(item.name||item.imageName||'')}</strong><div class="muted">${esc(item.location||item.type||'')} • ${esc(item.command||item.imagePath||'')}</div>`;
+      d.innerHTML = `<strong>${esc(item.name||item.imageName||item.entry||'')}</strong><div class="muted">${esc(item.location||item.type||'')} • ${esc(item.command||item.imagePath||item.launchString||item.launch_string||'')}</div>`;
     } else if(kind==='tasks'){
       d.innerHTML = `<strong>${esc(item.name||'')}</strong><div class="muted">State: ${esc(item.state||'')} • Next: ${esc(item.nextRun||'')}</div>`;
     } else if(kind==='binaries'){
-      d.innerHTML = `<div>${esc(item.path||'')}</div>`;
+      const path = item.path || item.Path || (typeof item === 'string' ? item : '');
+      d.innerHTML = `<div class="muted" style="font-size:13px">📄 Binary</div><strong>${esc(path)}</strong>`;
     } else if(kind==='directories'){
-      d.innerHTML = `<div>${esc(item.path||'')}</div>`;
+      const path = item.path || item.Path || (typeof item === 'string' ? item : '');
+      d.innerHTML = `<div class="muted" style="font-size:13px">📁 Directory</div><strong>${esc(path)}</strong>`;
     }
     return d;
   }
 
   function escapeHTML(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
   function riskColor(r){ if(!r) return '#5a6'; r=(r+"").toLowerCase(); if(r==='high')return '#ff5c7a'; if(r==='medium')return '#ffd166'; if(r==='low')return '#17e46e'; return '#5a6'; }
+
+  // Typing animation function
+  function typeText(element, text, speed = 50) {
+    element.textContent = '';
+    element.classList.add('typing');
+    let i = 0;
+
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+        } else {
+          clearInterval(interval);
+          element.classList.remove('typing');
+          resolve();
+        }
+      }, speed);
+    });
+  }
 
   // Hunt flow
   document.getElementById('startHunt').addEventListener('click', async ()=>{
@@ -209,8 +359,8 @@
     const r = await fetch('/api/hunt/start',{method:'POST'});
     const data = await r.json();
     if(data && data.reportName){
-      huntTag.textContent = 'Report: '+data.reportName+'.json';
       huntTag.classList.remove('hidden');
+      await typeText(huntTag, 'Report: '+data.reportName+'.json', 30);
       // Load report
       const rep = await (await fetch('/api/report?file='+encodeURIComponent(data.reportName+'.json'))).json();
       renderReport(rep); location.hash = '#report';
@@ -224,6 +374,276 @@
   });
 
   listHunts();
+
+  // Elimination interface
+  let currentReport = null;
+  const elimTree = document.getElementById('elimTree');
+  const elimCenter = document.getElementById('elimCenter');
+  const elimWiki = document.getElementById('elimWiki');
+
+  // Order of operations for safe elimination
+  const eliminationOrder = {
+    connections: { order: 1, label: 'STEP 1: CRITICAL', color: 'order-1' },
+    processes: { order: 2, label: 'STEP 2: HIGH PRIORITY', color: 'order-2' },
+    services: { order: 2, label: 'STEP 2: HIGH PRIORITY', color: 'order-2' },
+    tasks: { order: 2, label: 'STEP 2: HIGH PRIORITY', color: 'order-2' },
+    autoruns: { order: 2, label: 'STEP 2: HIGH PRIORITY', color: 'order-2' },
+    binaries: { order: 3, label: 'STEP 3: CLEANUP', color: 'order-3' },
+    directories: { order: 3, label: 'STEP 3: CLEANUP', color: 'order-3' }
+  };
+
+  const wikiContent = {
+    connections: {
+      title: 'Outbound Network Connections',
+      description: 'Active network connections from your computer to remote servers. RMM software maintains persistent connections to allow remote access.',
+      whatItMeans: 'These are live communication channels between your computer and external servers. Blocking them prevents the RMM software from receiving commands or sending data.',
+      fields: {
+        localAddr: 'Your computer\'s IP address and port number',
+        remoteAddr: 'The remote server\'s IP address and port',
+        remoteHost: 'The domain name or hostname of the remote server',
+        state: 'Connection status (ESTABLISHED means actively connected)',
+        pid: 'Process ID of the program using this connection',
+        process: 'Name of the program maintaining this connection'
+      },
+      action: 'Creates a Windows Firewall rule to block all outbound traffic to the remote host. This immediately severs the connection and prevents reconnection.',
+      why: 'Always eliminate connections FIRST to prevent the RMM software from detecting removal attempts or receiving commands during cleanup.'
+    },
+    processes: {
+      title: 'Running Processes',
+      description: 'Programs currently executing in your computer\'s memory. RMM software runs as background processes to maintain functionality.',
+      whatItMeans: 'These are active programs running right now. They consume system resources and can perform actions on your computer.',
+      fields: {
+        name: 'The executable filename of the process',
+        pid: 'Unique Process ID assigned by Windows',
+        ppid: 'Parent Process ID (the process that started this one)',
+        parent: 'Name of the parent process',
+        path: 'Full file path to the executable on disk',
+        args: 'Command-line arguments passed to the process',
+        created: 'When this process was started'
+      },
+      action: 'Terminates the process immediately using its Process ID. This stops the program from running.',
+      why: 'Kill processes BEFORE deleting binaries. A running process locks its executable file, preventing deletion. Processes can also restart services or recreate files.'
+    },
+    services: {
+      title: 'Windows Services',
+      description: 'Background programs that start automatically with Windows and run without user interaction. RMM software often installs as a service for persistence.',
+      whatItMeans: 'Services are special programs that Windows manages. They start automatically and run in the background, even when no user is logged in.',
+      fields: {
+        name: 'Internal service name used by Windows',
+        displayName: 'User-friendly name shown in Services manager',
+        serviceType: 'How the service runs (own process vs shared)',
+        startType: 'When the service starts (Automatic, Manual, Disabled)',
+        binaryPathName: 'Full path to the service executable',
+        serviceStartName: 'Account the service runs under',
+        description: 'What the service claims to do'
+      },
+      action: 'Stops the service if running, then deletes it from the Windows Service Control Manager. This prevents it from starting again.',
+      why: 'Stop services BEFORE deleting their binaries. Services can restart processes and maintain persistence even after process termination.'
+    },
+    tasks: {
+      title: 'Scheduled Tasks',
+      description: 'Automated actions scheduled to run at specific times or events. RMM software uses scheduled tasks to restart itself or maintain persistence.',
+      whatItMeans: 'These are automated jobs that Windows runs on a schedule. They can restart programs, run scripts, or perform maintenance.',
+      fields: {
+        name: 'Name of the scheduled task',
+        author: 'Who created the task',
+        state: 'Current status (Ready, Running, Disabled)',
+        enabled: 'Whether the task is active',
+        path: 'Location in Task Scheduler hierarchy',
+        nextRun: 'When the task will execute next',
+        lastRun: 'When the task last executed',
+        lastResult: 'Exit code from last execution'
+      },
+      action: 'Disables the task and then deletes it from Windows Task Scheduler. This prevents scheduled execution.',
+      why: 'Remove scheduled tasks BEFORE binaries. Tasks can automatically restart processes or services, undoing your cleanup efforts.'
+    },
+    autoruns: {
+      title: 'AutoRun Entries (Startup Items)',
+      description: 'Registry entries and startup folders that cause programs to run automatically when Windows starts or a user logs in.',
+      whatItMeans: 'These are configuration entries that tell Windows to automatically start certain programs. They ensure the RMM software runs every time you boot your computer.',
+      fields: {
+        type: 'Category of autorun (Registry, Startup Folder, etc.)',
+        location: 'Specific registry key or folder path',
+        entry: 'Name of the autorun entry',
+        imagePath: 'Path to the executable that will run',
+        imageName: 'Filename of the executable',
+        launchString: 'Full command that will be executed',
+        arguments: 'Command-line parameters',
+        md5: 'MD5 hash of the executable (for verification)',
+        sha1: 'SHA1 hash of the executable',
+        sha256: 'SHA256 hash of the executable'
+      },
+      action: 'Removes the registry entry or startup folder item. This prevents the program from starting automatically.',
+      why: 'Delete autorun entries BEFORE binaries to prevent automatic restart on next boot. However, do this AFTER killing processes to avoid immediate restart attempts.'
+    },
+    binaries: {
+      title: 'Binary Files (Executables)',
+      description: 'Executable files (.exe, .dll) stored on your hard drive. These are the actual program files for the RMM software.',
+      whatItMeans: 'These are the program files themselves. Deleting them removes the software from your computer permanently.',
+      fields: {
+        path: 'Full file path to the executable on disk'
+      },
+      action: 'Permanently deletes the file from your hard drive. This cannot be undone without a backup.',
+      why: 'Delete binaries LAST. You must first kill all processes using them, stop services that reference them, and remove scheduled tasks that execute them. A file in use cannot be deleted.'
+    },
+    directories: {
+      title: 'Installation Directories',
+      description: 'Folders containing RMM software files, configuration, logs, and data. These are the installation directories.',
+      whatItMeans: 'These are folders that contain all the files related to the RMM software, including executables, configuration files, and data.',
+      fields: {
+        path: 'Full path to the directory'
+      },
+      action: 'Recursively deletes the entire directory and all its contents. This removes all files and subdirectories.',
+      why: 'Delete directories LAST. Ensure all processes, services, and scheduled tasks using files in these directories are eliminated first. Deleting a directory while files are in use will fail.'
+    }
+  };
+
+  function loadEliminationData(data) {
+    currentReport = data;
+    const findings = data.findings || data;
+
+    // Build tree structure with order of operations
+    const categories = [
+      { key: 'connections', title: 'Outbound Connections', arr: findings.outboundConnections },
+      { key: 'processes', title: 'Processes', arr: findings.processes },
+      { key: 'services', title: 'Services', arr: findings.services },
+      { key: 'tasks', title: 'Scheduled Tasks', arr: findings.scheduledTasks },
+      { key: 'autoruns', title: 'AutoRuns', arr: findings.autoRuns || findings.autoruns },
+      { key: 'binaries', title: 'Binaries', arr: findings.binaries },
+      { key: 'directories', title: 'Directories', arr: findings.directories }
+    ];
+
+    elimTree.innerHTML = '';
+    elimCenter.innerHTML = '<div class="empty-state">Select an item from the tree</div>';
+    elimWiki.innerHTML = '<div class="empty-state">Item details will appear here</div>';
+
+    const hasFindings = categories.some(cat => Array.isArray(cat.arr) && cat.arr.length > 0);
+
+    if (!hasFindings) {
+      elimTree.innerHTML = '<div class="empty-state">No findings to eliminate.<br><br>Run a hunt first or load a previous report.</div>';
+      return;
+    }
+
+    categories.forEach(cat => {
+      if (!Array.isArray(cat.arr) || cat.arr.length === 0) return;
+
+      const orderInfo = eliminationOrder[cat.key];
+      const node = document.createElement('div');
+      node.className = 'tree-node';
+      node.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+        <span>▶ ${cat.title}</span>
+        <span class="tag">${cat.arr.length}</span>
+      </div>`;
+
+      const childContainer = document.createElement('div');
+      childContainer.style.display = 'none';
+
+      cat.arr.forEach((item, idx) => {
+        const child = document.createElement('div');
+        child.className = 'tree-child';
+        child.textContent = getItemLabel(cat.key, item, idx);
+        child.onclick = (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('.tree-child').forEach(c => c.classList.remove('selected'));
+          child.classList.add('selected');
+          showItemDetails(cat.key, item, idx);
+        };
+        childContainer.appendChild(child);
+      });
+
+      node.onclick = () => {
+        const isExpanded = childContainer.style.display === 'block';
+        childContainer.style.display = isExpanded ? 'none' : 'block';
+        node.classList.toggle('expanded', !isExpanded);
+        node.querySelector('span').textContent = (isExpanded ? '▶ ' : '▼ ') + cat.title;
+      };
+
+      elimTree.appendChild(node);
+      elimTree.appendChild(childContainer);
+    });
+  }
+
+  function getItemLabel(type, item, idx) {
+    if (type === 'connections') return `${item.process || 'Unknown'} → ${item.remoteHost || item.remoteAddr}`;
+    if (type === 'processes') return `${item.name} (PID ${item.pid})`;
+    if (type === 'services') return item.displayName || item.name;
+    if (type === 'tasks') return item.name;
+    if (type === 'autoruns') return item.imageName || item.entry || `Entry ${idx + 1}`;
+    if (type === 'binaries') return item.path || item;
+    if (type === 'directories') return item.path || item;
+    return `Item ${idx + 1}`;
+  }
+
+  function showItemDetails(type, item, idx) {
+    const orderInfo = eliminationOrder[type];
+    const wiki = wikiContent[type];
+
+    // Center panel - item details
+    elimCenter.innerHTML = `
+      <div class="order-badge ${orderInfo.color}">${orderInfo.label}</div>
+      <h3 style="margin:0 0 16px 0;color:var(--text)">${getItemLabel(type, item, idx)}</h3>
+      ${renderItemFields(type, item, wiki)}
+      <button class="elim-btn" onclick="eliminateItem('${type}', ${idx})">
+        <span class="elim-btn-icon">⚠</span>
+        <span>Eliminate This Item</span>
+      </button>
+    `;
+
+    // Right panel - wiki
+    elimWiki.innerHTML = `
+      <div class="wiki-section">
+        <div class="wiki-title">${wiki.title}</div>
+        <div class="wiki-text">${wiki.description}</div>
+      </div>
+      <div class="wiki-section">
+        <div class="wiki-title">What This Means</div>
+        <div class="wiki-text">${wiki.whatItMeans}</div>
+      </div>
+      <div class="wiki-section">
+        <div class="wiki-title">Field Explanations</div>
+        ${Object.entries(wiki.fields).map(([key, desc]) =>
+          `<div style="margin:8px 0"><strong style="color:var(--accent);font-size:12px">${key}:</strong> <span class="wiki-text">${desc}</span></div>`
+        ).join('')}
+      </div>
+      <div class="wiki-section">
+        <div class="wiki-title">What Elimination Does</div>
+        <div class="wiki-text">${wiki.action}</div>
+      </div>
+      <div class="wiki-section">
+        <div class="wiki-title" style="color:${orderInfo.color === 'order-1' ? '#ff5c7a' : orderInfo.color === 'order-2' ? '#ffd166' : '#17e46e'}">Why This Order?</div>
+        <div class="wiki-text">${wiki.why}</div>
+      </div>
+    `;
+  }
+
+  function renderItemFields(type, item, wiki) {
+    const fields = Object.keys(wiki.fields);
+    return fields.map(field => {
+      let value = item[field];
+      if (value === undefined || value === null || value === '') return '';
+      if (typeof value === 'boolean') value = value ? 'Yes' : 'No';
+      return `
+        <div class="detail-field">
+          <div class="detail-label">${field}</div>
+          <div class="detail-value">${escapeHTML(String(value))}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.eliminateItem = function(type, idx) {
+    if (!confirm(`Are you sure you want to eliminate this ${type.slice(0, -1)}?\n\nThis action cannot be undone.`)) return;
+
+    alert('Elimination functionality requires backend API implementation.\n\nFor now, please use the CLI: rmm-hunter eliminate --cli');
+    // TODO: Implement API call to backend elimination endpoint
+  };
+
+  // Update renderReport to also load elimination data
+  const originalRenderReport = renderReport;
+  renderReport = function(rep) {
+    originalRenderReport(rep);
+    loadEliminationData(rep);
+  };
 })();
 </script>
 </body>

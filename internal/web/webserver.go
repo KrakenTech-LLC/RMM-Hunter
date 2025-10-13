@@ -54,28 +54,72 @@ type server struct {
 }
 
 func StartWebServer() {
+	var hostAdded bool
 	h := newHub()
 	s := &server{hub: h, quitCh: make(chan struct{})}
+
+	// Add hosts file entry for rmm-hunter
+	if err := AddHostsEntry(); err != nil {
+		log.Printf("[web] Warning: Failed to add hosts entry: %v\n", err)
+	} else {
+		hostAdded = true
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
 	mux.HandleFunc("/logo", s.handleLogo)
+	mux.HandleFunc("/favicon.ico", s.handleFavicon)
+	mux.HandleFunc("/favicon-32x32.png", s.handleFavicon)
+	mux.HandleFunc("/favicon-16x16.png", s.handleFavicon)
+	mux.HandleFunc("/apple-touch-icon.png", s.handleFavicon)
+	mux.HandleFunc("/site.webmanifest", s.handleManifest)
 	mux.HandleFunc("/api/hunts", s.handleListHunts)
 	mux.HandleFunc("/api/hunt/start", s.handleStartHunt)
 	mux.HandleFunc("/api/report", s.handleGetReport)
 	mux.HandleFunc("/api/quit", s.handleQuit)
 	mux.HandleFunc("/ws/hunt", s.handleWS)
 
-	s.http = &http.Server{Addr: ":8080", Handler: logRequests(mux)}
+	s.http = &http.Server{Addr: ":80", Handler: logRequests(mux)}
+
+	// Determine which URL to open in browser
+	browserURL := "http://rmm-hunter"
+	if !hostAdded {
+		browserURL = "http://127.0.0.1"
+	}
+
+	// Channel to signal when server is ready
+	serverReady := make(chan struct{})
+
 	go func() {
-		log.Printf("[web] starting on http://127.0.0.1:8080\n")
+		// Signal that we're about to start listening
+		close(serverReady)
+
 		if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %v", err)
 		}
 	}()
 
+	// Wait for server to start, then open browser
+	<-serverReady
+	time.Sleep(500 * time.Millisecond) // Give server a moment to fully initialize
+	log.Printf("[web] Opening browser to %s...\n", browserURL)
+	if err := OpenBrowser(browserURL); err != nil {
+		log.Printf("[web] Warning: Failed to open browser: %v\n", err)
+		if !hostAdded {
+			log.Printf("[web] Please open your browser and navigate to http://127.0.0.1\n")
+		}
+		log.Printf("[web] Please open your browser and navigate to http://rmm-hunter\n")
+	}
+
 	// block until quit
 	<-s.quitCh
+
+	// Clean up hosts entry on exit
+	log.Printf("[web] Cleaning up hosts entry...\n")
+	if err := RemoveHostsEntry(); err != nil {
+		log.Printf("[web] Warning: Failed to remove hosts entry: %v\n", err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	_ = s.http.Shutdown(ctx)
@@ -110,6 +154,38 @@ func (s *server) handleLogo(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 	w.Header().Set("Content-Type", "image/png")
 	http.ServeContent(w, r, "rmm-hunter.png", time.Now(), f)
+}
+
+// serve favicon files from embedded templates folder
+func (s *server) handleFavicon(w http.ResponseWriter, r *http.Request) {
+	filename := filepath.Base(r.URL.Path)
+	b, err := contentFS.ReadFile("templates/" + filename)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Set appropriate content type
+	contentType := "image/x-icon"
+	if filepath.Ext(filename) == ".png" {
+		contentType = "image/png"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
+	w.Write(b)
+}
+
+// serve site.webmanifest from embedded templates folder
+func (s *server) handleManifest(w http.ResponseWriter, r *http.Request) {
+	b, err := contentFS.ReadFile("templates/site.webmanifest")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/manifest+json")
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
+	w.Write(b)
 }
 
 func (s *server) handleListHunts(w http.ResponseWriter, r *http.Request) {

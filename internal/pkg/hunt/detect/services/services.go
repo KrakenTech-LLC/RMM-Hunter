@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/Kraken-OffSec/Scurvy/core/service"
-	"golang.org/x/sys/windows"
 )
 
 // Whitelist for our own tool and legitimate system components
@@ -35,7 +34,8 @@ func Detect() []*Service {
 		fmt.Printf("[-] Error getting Service Manager: %s\n", err.Error())
 		return []*Service{}
 	}
-	defer windows.Close(scm.Handle)
+	// Note: The service manager handle is managed by the Scurvy library
+	// and should not be manually closed here to avoid invalid handle errors
 
 	services, err := scm.ListServices()
 	if err != nil {
@@ -57,6 +57,8 @@ func compareServices(serviceStrings []string, scm *service.Mgr) []*Service {
 			fmt.Printf("         [>-] Error opening service %s: %s\n", serviceString, err.Error())
 			continue
 		}
+		// Note: Individual service handles are also managed by Scurvy library
+
 		config, err := svc.Config()
 		if err != nil {
 			fmt.Printf("         [>-] Error getting service config %s: %s\n", serviceString, err.Error())
