@@ -30,6 +30,10 @@
     .nav{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:8px;padding:12px 24px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.5px;font-size:16px;color:var(--text)}
     .brand img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(23,228,110,.3))}
+    .active-report-indicator{display:flex;align-items:center;gap:8px;background:rgba(23,228,110,.08);border:1px solid rgba(23,228,110,.2);border-radius:8px;padding:8px 14px;margin-left:16px;transition:all 0.3s ease}
+    .active-report-indicator .report-icon{font-size:16px}
+    .active-report-indicator .report-name{font-size:13px;color:var(--accent);font-weight:500;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .active-report-indicator:hover{background:rgba(23,228,110,.12);border-color:rgba(23,228,110,.3)}
     .spacer{flex:1}
     .nav a.btn{display:inline-flex;align-items:center;padding:10px 18px;border:none;border-radius:6px;color:var(--text);text-decoration:none;transition:all .2s;font-weight:500;font-size:14px;position:relative;overflow:hidden}
     .nav a.btn::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(23,228,110,.1),rgba(23,228,110,.05));opacity:0;transition:opacity .2s}
@@ -42,6 +46,9 @@
     main{max-width:1100px;margin:20px auto;padding:0 16px;flex:1;width:100%}
     main.full-width{max-width:none;padding:0 20px}
     .card{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.25);overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;overflow:hidden}
+    .expandable-item{transition:all 0.2s ease;position:relative;padding-right:40px}
+    .expandable-item:hover{border-color:var(--accent);background:#0e1a13}
+    .expandable-item::after{content:'▼';position:absolute;right:20px;top:20px;color:var(--muted);font-size:12px;transition:transform 0.2s}
     h1,h2{margin:10px 0}
     .muted{color:var(--muted)}
     .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));min-height:400px}
@@ -74,6 +81,9 @@
     .tree-child:hover::before,.tree-child.selected::before{opacity:1}
     .tree-child.eliminating{animation:slideOutRight 0.6s ease-in-out forwards}
     .tree-child.eliminating::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(23,228,110,.3),transparent);animation:shimmer 0.6s ease-in-out}
+    .tree-child.eliminated{display:none;opacity:0.4;filter:grayscale(1);text-decoration:line-through;pointer-events:none}
+    .tree-child.eliminated::before{content:'✓ ';color:#17e46e;opacity:1}
+    .show-eliminated .tree-child.eliminated{display:flex}
     @keyframes slideOutRight{0%{transform:translateX(0);opacity:1}50%{opacity:0.5}100%{transform:translateX(100%);opacity:0;height:0;margin:0;padding:0}}
     @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
     .detail-field{margin:12px 0;padding:10px;background:#050805;border:1px solid #0c2819;border-radius:8px}
@@ -123,19 +133,23 @@
     .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:10001;display:none;align-items:center;justify-content:center}
     .modal.active{display:flex}
     .modal-content{background:var(--panel);border:1px solid #133422;border-radius:12px;padding:30px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-    .modal-icon{font-size:60px;text-align:center;margin-bottom:20px}
+    .modal-icon{font-size:48px;text-align:left;margin-bottom:16px;display:block}
     .modal-icon.success{color:var(--accent);animation:checkPop 0.5s ease-out}
     .modal-icon.error{color:#ff5c7a}
     @keyframes checkPop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
-    .modal-title{font-size:24px;font-weight:700;text-align:center;margin-bottom:12px}
+    .modal-title{font-size:24px;font-weight:700;margin-bottom:16px;text-align:left}
     .modal-title.success{color:var(--accent)}
     .modal-title.error{color:#ff5c7a}
-    .modal-message{text-align:center;color:var(--muted);margin-bottom:24px;line-height:1.6}
-    .modal-btn{width:100%;padding:14px;border:none;border-radius:8px;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s}
-    .modal-btn.success{background:var(--accent);color:#000}
-    .modal-btn.success:hover{filter:brightness(1.2)}
-    .modal-btn.error{background:rgba(255,92,122,.2);color:#ff5c7a;border:1px solid #ff5c7a}
-    .modal-btn.error:hover{background:rgba(255,92,122,.3)}
+    .modal-title.confirm{color:#ffd166}
+    .modal-message{color:var(--text);margin-bottom:24px;line-height:1.6;white-space:pre-wrap;font-size:15px;text-align:left}
+    .modal-buttons{display:flex;gap:12px;margin-top:24px}
+    .modal-btn{flex:1;padding:12px 24px;border:1px solid #1d4a2f;background:var(--panel);color:var(--text);font-weight:500;font-size:14px;cursor:pointer;transition:all 0.2s;border-radius:0}
+    .modal-btn:hover{background:#0e1a13;border-color:var(--accent)}
+    .modal-btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+    .modal-btn.primary:hover{filter:brightness(1.2)}
+    .modal-btn.danger{background:rgba(255,92,122,.15);color:#ff5c7a;border-color:#ff5c7a}
+    .modal-btn.danger:hover{background:rgba(255,92,122,.25)}
+    .modal-icon.confirm{color:#ffd166;text-align:left}
   </style>
 </head>
 <body>
@@ -161,7 +175,7 @@
       <div id="modalIcon" class="modal-icon"></div>
       <div id="modalTitle" class="modal-title"></div>
       <div id="modalMessage" class="modal-message"></div>
-      <button id="modalBtn" class="modal-btn"></button>
+      <div id="modalButtons" class="modal-buttons"></div>
     </div>
   </div>
 
@@ -169,9 +183,14 @@
     <div class="nav">
       <div class="brand"><img src="/logo" alt="RMM Hunter"><span>RMM Hunter</span></div>
       <span class="pill">KrakenTech LLC</span>
+      <div id="activeReportIndicator" class="active-report-indicator hidden">
+        <span class="report-icon">📄</span>
+        <span id="activeReportName" class="report-name">No report loaded</span>
+      </div>
       <div class="spacer"></div>
       <a href="#hunt" class="btn primary">Hunt</a>
       <a href="#previous" class="btn">Previous Hunts</a>
+      <a id="reportNavBtn" href="#report" class="btn hidden">Report</a>
       <a href="#eliminate" class="btn">Eliminate</a>
       <a id="quitBtn" class="btn danger">Quit</a>
     </div>
@@ -204,7 +223,12 @@
     </section>
 
     <section id="eliminateSection" class="hidden">
-      <h2 style="margin:0 0 16px 0">Eliminate Detected Items</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2 style="margin:0">Eliminate Detected Items</h2>
+        <button id="toggleEliminatedBtn" class="btn" style="font-size:13px;padding:8px 16px">
+          <span id="toggleEliminatedText">Show Eliminated Items</span>
+        </button>
+      </div>
       <div id="elimContent" class="elim-layout">
         <div class="elim-tree" id="elimTree">
           <div class="empty-state">Load a report first</div>
@@ -260,6 +284,9 @@
   const huntsEl = document.getElementById('hunts');
   const huntTag = document.getElementById('huntTag');
   const viewReportBtn = document.getElementById('viewReportBtn');
+  const reportNavBtn = document.getElementById('reportNavBtn');
+  const activeReportIndicator = document.getElementById('activeReportIndicator');
+  const activeReportName = document.getElementById('activeReportName');
   const reportSection = document.getElementById('reportSection');
   const reportHeader = document.getElementById('reportHeader');
   const reportBody = document.getElementById('reportBody');
@@ -314,12 +341,29 @@
     const r = await fetch('/api/report?file='+encodeURIComponent(file));
     const data = await r.json();
     renderReport(data);
+
+    // Set active report indicator
+    setActiveReport(file);
+
     location.hash = '#report';
+  }
+
+  function setActiveReport(reportFileName) {
+    if (reportFileName) {
+      activeReportIndicator.classList.remove('hidden');
+      activeReportName.textContent = reportFileName;
+      reportNavBtn.classList.remove('hidden');
+    } else {
+      activeReportIndicator.classList.add('hidden');
+      activeReportName.textContent = 'No report loaded';
+      reportNavBtn.classList.add('hidden');
+    }
   }
 
   function renderReport(rep){
     reportHeader.innerHTML = '';
     reportBody.innerHTML = '';
+
     const risk = rep.riskRating||{};
     reportHeader.innerHTML = `<div class="pill">Risk: <strong style="color:${riskColor(risk.rating)}">${risk.rating||'N/A'}</strong> (${(risk.score??'-')}/10)</div>
     <div class="muted">${escapeHTML(rep.riskRating?.summary||'')}</div>`;
@@ -342,7 +386,12 @@
       const wrap = document.createElement('div');
       wrap.className='card';
       const count = Array.isArray(b.arr)?b.arr.length:0;
-      wrap.innerHTML = `<h3>${b.title} <span class="tag">${count}</span> <span class="tooltip" title="${b.info}">ⓘ</span></h3>`;
+      wrap.innerHTML = `
+        <h3 style="display:flex;align-items:center;gap:12px">
+          ${b.title}
+          <span style="color:var(--muted);font-size:14px;font-weight:400">(${count})</span>
+          <span style="cursor:help;color:var(--accent);font-size:14px" title="${b.info}">?</span>
+        </h3>`;
       if(count===0){
         wrap.innerHTML += '<div class="muted">No items found.</div>';
       } else {
@@ -358,25 +407,141 @@
   }
 
   function renderItem(kind, item){
-    const d = document.createElement('div'); d.className='card'; d.style.margin='0';
+    const d = document.createElement('div');
+    d.className='card expandable-item';
+    d.style.margin='0';
+    d.style.cursor='pointer';
+
     const esc = escapeHTML;
+    let summary = '';
+    let details = '';
+
     if(kind==='processes'){
-      d.innerHTML = `<strong>${esc(item.name||'')}</strong><div class="muted">PID: ${item.pid} • Path: ${esc(item.path||'')}</div>`;
+      summary = `<strong>${esc(item.name||'')}</strong><div class="muted">PID: ${item.pid} • ${esc(item.path||'')}</div>`;
+      details = `
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1d4a2f">
+          <div style="display:grid;gap:6px;font-size:13px">
+            <div><span style="color:var(--muted)">Name:</span> ${esc(item.name||'N/A')}</div>
+            <div><span style="color:var(--muted)">PID:</span> ${item.pid||'N/A'}</div>
+            <div><span style="color:var(--muted)">PPID:</span> ${item.ppid||'N/A'}</div>
+            <div><span style="color:var(--muted)">Parent:</span> ${esc(item.parent||'N/A')}</div>
+            <div><span style="color:var(--muted)">Path:</span> ${esc(item.path||'N/A')}</div>
+            <div><span style="color:var(--muted)">Arguments:</span> ${esc(item.args||'N/A')}</div>
+            <div><span style="color:var(--muted)">Created:</span> ${esc(item.created||'N/A')}</div>
+            ${item.eliminated ? '<div style="color:var(--accent)">✓ Eliminated</div>' : ''}
+          </div>
+        </div>`;
     } else if(kind==='services'){
-      d.innerHTML = `<strong>${esc(item.displayName||item.name||'')}</strong><div class="muted">Start: ${esc(item.startType||'')} • Bin: ${esc(item.binaryPathName||'')}</div>`;
+      summary = `<strong>${esc(item.displayName||item.name||'')}</strong><div class="muted">${esc(item.startType||'')} • ${esc(item.binaryPathName||'')}</div>`;
+      details = `
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1d4a2f">
+          <div style="display:grid;gap:6px;font-size:13px">
+            <div><span style="color:var(--muted)">Display Name:</span> ${esc(item.displayName||'N/A')}</div>
+            <div><span style="color:var(--muted)">Service Name:</span> ${esc(item.name||'N/A')}</div>
+            <div><span style="color:var(--muted)">Service Type:</span> ${esc(item.serviceType||'N/A')}</div>
+            <div><span style="color:var(--muted)">Start Type:</span> ${esc(item.startType||'N/A')}</div>
+            <div><span style="color:var(--muted)">Binary Path:</span> ${esc(item.binaryPathName||'N/A')}</div>
+            <div><span style="color:var(--muted)">Description:</span> ${esc(item.description||'N/A')}</div>
+            <div><span style="color:var(--muted)">Error Control:</span> ${esc(item.errorControl||'N/A')}</div>
+            <div><span style="color:var(--muted)">Load Order Group:</span> ${esc(item.loadOrderGroup||'N/A')}</div>
+            <div><span style="color:var(--muted)">Service Start Name:</span> ${esc(item.serviceStartName||'N/A')}</div>
+            <div><span style="color:var(--muted)">Delayed Auto Start:</span> ${item.delayedAutoStart ? 'Yes' : 'No'}</div>
+            <div><span style="color:var(--muted)">Dependencies:</span> ${item.dependencies && item.dependencies.length > 0 ? esc(item.dependencies.join(', ')) : 'None'}</div>
+            ${item.eliminated ? '<div style="color:var(--accent)">✓ Eliminated</div>' : ''}
+          </div>
+        </div>`;
     } else if(kind==='connections'){
-      d.innerHTML = `<strong>${esc(item.process||'')}</strong><div class="muted">${esc(item.localAddr||'')} → ${esc(item.remoteAddr||'')} (${esc(item.remoteHost||'')})</div>`;
+      summary = `<strong>${esc(item.process||'')}</strong><div class="muted">${esc(item.localAddr||'')} → ${esc(item.remoteAddr||'')} (${esc(item.remoteHost||'')})</div>`;
+      details = `
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1d4a2f">
+          <div style="display:grid;gap:6px;font-size:13px">
+            <div><span style="color:var(--muted)">Process:</span> ${esc(item.process||'N/A')}</div>
+            <div><span style="color:var(--muted)">PID:</span> ${item.pid||'N/A'}</div>
+            <div><span style="color:var(--muted)">Local Address:</span> ${esc(item.localAddr||'N/A')}</div>
+            <div><span style="color:var(--muted)">Remote Address:</span> ${esc(item.remoteAddr||'N/A')}</div>
+            <div><span style="color:var(--muted)">Remote Host:</span> ${esc(item.remoteHost||'N/A')}</div>
+            <div><span style="color:var(--muted)">State:</span> ${esc(item.state||'N/A')}</div>
+            ${item.eliminated ? '<div style="color:var(--accent)">✓ Eliminated (Firewall Rule)</div>' : ''}
+          </div>
+        </div>`;
     } else if(kind==='autoruns'){
-      d.innerHTML = `<strong>${esc(item.name||item.imageName||item.entry||'')}</strong><div class="muted">${esc(item.location||item.type||'')} • ${esc(item.command||item.imagePath||item.launchString||item.launch_string||'')}</div>`;
+      const displayName = item.image_name || item.imageName || item.entry || 'Unknown AutoRun';
+      const launchStr = item.launch_string || item.launchString || item.imagePath || item.image_path || '';
+      summary = `<strong>${esc(displayName)}</strong><div class="muted">${esc(item.type||'')} • ${esc(item.location||'')}</div>`;
+      details = `
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1d4a2f">
+          <div style="display:grid;gap:6px;font-size:13px">
+            <div><span style="color:var(--muted)">Image Name:</span> ${esc(item.image_name||item.imageName||'N/A')}</div>
+            <div><span style="color:var(--muted)">Entry:</span> ${esc(item.entry||'N/A')}</div>
+            <div><span style="color:var(--muted)">Type:</span> ${esc(item.type||'N/A')}</div>
+            <div><span style="color:var(--muted)">Location:</span> ${esc(item.location||'N/A')}</div>
+            <div><span style="color:var(--muted)">Image Path:</span> ${esc(item.image_path||item.imagePath||'N/A')}</div>
+            <div><span style="color:var(--muted)">Launch String:</span> ${esc(launchStr||'N/A')}</div>
+            <div><span style="color:var(--muted)">Arguments:</span> ${esc(item.arguments||'N/A')}</div>
+            <div><span style="color:var(--muted)">MD5:</span> ${esc(item.md5||'N/A')}</div>
+            <div><span style="color:var(--muted)">SHA1:</span> ${esc(item.sha1||'N/A')}</div>
+            <div><span style="color:var(--muted)">SHA256:</span> ${esc(item.sha256||'N/A')}</div>
+            ${item.eliminated ? '<div style="color:var(--accent)">✓ Eliminated</div>' : ''}
+          </div>
+        </div>`;
     } else if(kind==='tasks'){
-      d.innerHTML = `<strong>${esc(item.name||'')}</strong><div class="muted">State: ${esc(item.state||'')} • Next: ${esc(item.nextRun||'')}</div>`;
+      summary = `<strong>${esc(item.name||'')}</strong><div class="muted">${esc(item.state||'')} • ${esc(item.path||'')}</div>`;
+      details = `
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1d4a2f">
+          <div style="display:grid;gap:6px;font-size:13px">
+            <div><span style="color:var(--muted)">Name:</span> ${esc(item.name||'N/A')}</div>
+            <div><span style="color:var(--muted)">Path:</span> ${esc(item.path||'N/A')}</div>
+            <div><span style="color:var(--muted)">State:</span> ${esc(item.state||'N/A')}</div>
+            <div><span style="color:var(--muted)">Enabled:</span> ${item.enabled ? 'Yes' : 'No'}</div>
+            <div><span style="color:var(--muted)">Author:</span> ${esc(item.author||'N/A')}</div>
+            <div><span style="color:var(--muted)">Description:</span> ${esc(item.description||'N/A')}</div>
+            <div><span style="color:var(--muted)">Next Run:</span> ${esc(item.nextRun||'N/A')}</div>
+            <div><span style="color:var(--muted)">Last Run:</span> ${esc(item.lastRun||'N/A')}</div>
+            <div><span style="color:var(--muted)">Last Result:</span> ${esc(item.lastResult||'N/A')}</div>
+            <div><span style="color:var(--muted)">Created:</span> ${esc(item.createdDate||'N/A')}</div>
+            <div><span style="color:var(--muted)">Modified:</span> ${esc(item.modifiedDate||'N/A')}</div>
+            ${item.eliminated ? '<div style="color:var(--accent)">✓ Eliminated</div>' : ''}
+          </div>
+        </div>`;
     } else if(kind==='binaries'){
       const path = item.path || item.Path || (typeof item === 'string' ? item : '');
-      d.innerHTML = `<div class="muted" style="font-size:13px">📄 Binary</div><strong>${esc(path)}</strong>`;
+      summary = `<div class="muted" style="font-size:13px">📄 Binary</div><strong>${esc(path)}</strong>`;
+      details = `
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1d4a2f">
+          <div style="display:grid;gap:6px;font-size:13px">
+            <div><span style="color:var(--muted)">Path:</span> ${esc(path)}</div>
+            ${item.eliminated ? '<div style="color:var(--accent)">✓ Eliminated</div>' : ''}
+          </div>
+        </div>`;
     } else if(kind==='directories'){
       const path = item.path || item.Path || (typeof item === 'string' ? item : '');
-      d.innerHTML = `<div class="muted" style="font-size:13px">📁 Directory</div><strong>${esc(path)}</strong>`;
+      summary = `<div class="muted" style="font-size:13px">📁 Directory</div><strong>${esc(path)}</strong>`;
+      details = `
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1d4a2f">
+          <div style="display:grid;gap:6px;font-size:13px">
+            <div><span style="color:var(--muted)">Path:</span> ${esc(path)}</div>
+            ${item.eliminated ? '<div style="color:var(--accent)">✓ Eliminated</div>' : ''}
+          </div>
+        </div>`;
     }
+
+    d.innerHTML = `
+      <div class="item-summary">${summary}</div>
+      <div class="item-details" style="display:none">${details}</div>
+    `;
+
+    // Toggle expand/collapse on click
+    d.addEventListener('click', () => {
+      const detailsEl = d.querySelector('.item-details');
+      const isExpanded = detailsEl.style.display !== 'none';
+
+      if (isExpanded) {
+        detailsEl.style.display = 'none';
+      } else {
+        detailsEl.style.display = 'block';
+      }
+    });
+
     return d;
   }
 
@@ -454,9 +619,13 @@
       await typeText(huntTag, 'Report: '+data.reportName+'.json', 30);
 
       // Load report
-      const rep = await (await fetch('/api/report?file='+encodeURIComponent(data.reportName+'.json'))).json();
+      const reportFileName = data.reportName+'.json';
+      const rep = await (await fetch('/api/report?file='+encodeURIComponent(reportFileName))).json();
       lastReportData = rep;
       renderReport(rep);
+
+      // Set active report indicator
+      setActiveReport(reportFileName);
 
       // Show View Report button AFTER everything is loaded
       viewReportBtn.classList.remove('hidden');
@@ -497,9 +666,19 @@
 
   // Elimination interface
   let currentReport = null;
+  let showEliminatedItems = false;
   const elimTree = document.getElementById('elimTree');
   const elimCenter = document.getElementById('elimCenter');
   const elimWiki = document.getElementById('elimWiki');
+  const toggleEliminatedBtn = document.getElementById('toggleEliminatedBtn');
+  const toggleEliminatedText = document.getElementById('toggleEliminatedText');
+
+  // Toggle eliminated items visibility
+  toggleEliminatedBtn.addEventListener('click', () => {
+    showEliminatedItems = !showEliminatedItems;
+    elimTree.classList.toggle('show-eliminated', showEliminatedItems);
+    toggleEliminatedText.textContent = showEliminatedItems ? 'Hide Eliminated Items' : 'Show Eliminated Items';
+  });
 
   // Order of operations for safe elimination
   const eliminationOrder = {
@@ -621,6 +800,7 @@
   function loadEliminationData(data) {
     currentReport = data;
     const findings = data.findings || data;
+    console.log('Loading elimination data, findings:', findings);
 
     // Build tree structure using order of operations
     const categories = [
@@ -632,6 +812,7 @@
       { key: 'binaries', title: 'Binaries', arr: findings.binaries },
       { key: 'directories', title: 'Directories', arr: findings.directories }
     ];
+    console.log('Categories:', categories);
 
     elimTree.innerHTML = '';
     elimCenter.innerHTML = '<div class="empty-state">Select an item from the tree</div>';
@@ -648,11 +829,14 @@
       if (!Array.isArray(cat.arr) || cat.arr.length === 0) return;
 
       const orderInfo = eliminationOrder[cat.key];
+      const activeCount = cat.arr.filter(item => !item.eliminated).length;
+      const totalCount = cat.arr.length;
+
       const node = document.createElement('div');
       node.className = 'tree-node';
       node.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
         <span>▶ ${cat.title}</span>
-        <span class="tag">${cat.arr.length}</span>
+        <span class="tag">${activeCount}${activeCount !== totalCount ? ` / ${totalCount}` : ''}</span>
       </div>`;
 
       const childContainer = document.createElement('div');
@@ -661,6 +845,14 @@
       cat.arr.forEach((item, idx) => {
         const child = document.createElement('div');
         child.className = 'tree-child';
+        child.dataset.type = cat.key;
+        child.dataset.index = idx;
+
+        // Mark as eliminated if the item has eliminated flag
+        if (item.eliminated) {
+          child.classList.add('eliminated');
+        }
+
         child.textContent = getItemLabel(cat.key, item, idx);
         child.onclick = (e) => {
           e.stopPropagation();
@@ -688,10 +880,42 @@
     if (type === 'processes') return `${item.name} (PID ${item.pid})`;
     if (type === 'services') return item.displayName || item.name;
     if (type === 'tasks') return item.name;
-    if (type === 'autoruns') return item.imageName || item.entry || `Entry ${idx + 1}`;
+    if (type === 'autoruns') return item.image_name || item.imageName || item.entry || 'Unknown AutoRun';
     if (type === 'binaries') return item.path || item;
     if (type === 'directories') return item.path || item;
     return `Item ${idx + 1}`;
+  }
+
+  function updateCategoryCount(type) {
+    // Find the category node and update its count
+    const categoryTitles = {
+      'connections': 'Outbound Connections',
+      'processes': 'Processes',
+      'services': 'Services',
+      'tasks': 'Scheduled Tasks',
+      'autoruns': 'AutoRuns',
+      'binaries': 'Binaries',
+      'directories': 'Directories'
+    };
+
+    const categoryTitle = categoryTitles[type];
+    const treeNodes = elimTree.querySelectorAll('.tree-node');
+
+    treeNodes.forEach(node => {
+      if (node.textContent.includes(categoryTitle)) {
+        const childContainer = node.nextElementSibling;
+        if (childContainer) {
+          const allChildren = Array.from(childContainer.querySelectorAll('.tree-child'));
+          const activeCount = allChildren.filter(child => !child.classList.contains('eliminated')).length;
+          const totalCount = allChildren.length;
+
+          const tagElement = node.querySelector('.tag');
+          if (tagElement) {
+            tagElement.textContent = `${activeCount}${activeCount !== totalCount ? ` / ${totalCount}` : ''}`;
+          }
+        }
+      }
+    });
   }
 
   function showItemDetails(type, item, idx) {
@@ -737,18 +961,53 @@
   }
 
   function renderItemFields(type, item, wiki) {
-    const fields = Object.keys(wiki.fields);
-    return fields.map(field => {
+    // Get all fields from the item, not just wiki fields
+    const allFields = new Set();
+
+    // Add wiki fields first (for ordering)
+    Object.keys(wiki.fields).forEach(f => allFields.add(f));
+
+    // Add all actual item fields (handle snake_case variants)
+    Object.keys(item).forEach(key => {
+      if (key !== 'eliminated') { // Skip eliminated flag
+        allFields.add(key);
+        // Also add camelCase variant if this is snake_case
+        if (key.includes('_')) {
+          const camelCase = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+          allFields.add(camelCase);
+        }
+      }
+    });
+
+    return Array.from(allFields).map(field => {
+      // Try both snake_case and camelCase
       let value = item[field];
+      if (value === undefined || value === null) {
+        const snakeCase = field.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        value = item[snakeCase];
+      }
+
       if (value === undefined || value === null || value === '') return '';
+
+      // Handle arrays
+      if (Array.isArray(value)) {
+        value = value.length > 0 ? value.join(', ') : 'None';
+      }
+
+      // Handle booleans
       if (typeof value === 'boolean') value = value ? 'Yes' : 'No';
+
+      // Format field name for display
+      const displayName = field.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim()
+        .split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
       return `
         <div class="detail-field">
-          <div class="detail-label">${field}</div>
+          <div class="detail-label">${displayName}</div>
           <div class="detail-value">${escapeHTML(String(value))}</div>
         </div>
       `;
-    }).join('');
+    }).filter(x => x).join('');
   }
 
   // Modal functions
@@ -756,63 +1015,90 @@
   const modalIcon = document.getElementById('modalIcon');
   const modalTitle = document.getElementById('modalTitle');
   const modalMessage = document.getElementById('modalMessage');
-  const modalBtn = document.getElementById('modalBtn');
+  const modalButtons = document.getElementById('modalButtons');
 
-  function showModal(type, title, message) {
+  function showModal(type, title, message, onConfirm = null) {
     modal.classList.add('active');
     modalIcon.className = `modal-icon ${type}`;
     modalTitle.className = `modal-title ${type}`;
     modalTitle.textContent = title;
     modalMessage.textContent = message;
-    modalBtn.className = `modal-btn ${type}`;
-    modalBtn.textContent = 'OK';
 
     if (type === 'success') {
       modalIcon.textContent = '✓';
-    } else {
+    } else if (type === 'error') {
       modalIcon.textContent = '✕';
+    } else if (type === 'confirm') {
+      modalIcon.textContent = '⚠';
     }
 
-    modalBtn.onclick = () => {
-      modal.classList.remove('active');
-    };
+    // Clear existing buttons
+    modalButtons.innerHTML = '';
+
+    if (type === 'confirm' && onConfirm) {
+      // Confirmation modal with Cancel and Eliminate buttons
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'modal-btn';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.onclick = () => {
+        modal.classList.remove('active');
+      };
+
+      const confirmBtn = document.createElement('button');
+      confirmBtn.className = 'modal-btn danger';
+      confirmBtn.textContent = 'Yes, Eliminate This Item';
+      confirmBtn.onclick = () => {
+        modal.classList.remove('active');
+        onConfirm();
+      };
+
+      modalButtons.appendChild(cancelBtn);
+      modalButtons.appendChild(confirmBtn);
+    } else {
+      // Regular modal with just OK button
+      const okBtn = document.createElement('button');
+      okBtn.className = `modal-btn primary`;
+      okBtn.textContent = 'OK';
+      okBtn.onclick = () => {
+        modal.classList.remove('active');
+      };
+      modalButtons.appendChild(okBtn);
+    }
   }
 
   window.eliminateItem = async function(type, idx) {
-    if (!confirm(`Are you sure you want to eliminate this ${type.slice(0, -1)}?\n\nThis action cannot be undone.`)) return;
-
     if (!currentReport) {
       showModal('error', 'Error', 'No report loaded');
       return;
     }
 
-    // Get the report filename from the current report
-    const reportFile = currentReport.reportName || currentReport.name || 'rmm-hunter-report.json';
+    // Show custom confirmation modal
+    const typeName = type.slice(0, -1);
+    showModal('confirm', 'Confirm Elimination',
+      `Are you sure you want to eliminate this ${typeName}?\n\nThis action cannot be undone and will permanently remove it from your system.`,
+      async () => {
+        // User confirmed, proceed with elimination
+        await performElimination(type, idx);
+      }
+    );
+  };
 
-    // Find the tree child element for this item
+  async function performElimination(type, idx) {
+    // Get the report filename from the current report
+    let reportFile = currentReport.reportName || currentReport.name || 'rmm-hunter-report.json';
+    // Ensure .json extension
+    if (!reportFile.endsWith('.json')) {
+      reportFile += '.json';
+    }
+
+    // Find the tree child element for this item using data attributes
     const treeChildren = document.querySelectorAll('.tree-child');
     let targetElement = null;
 
-    // Find the element by matching the index and type
-    treeChildren.forEach((child, childIdx) => {
-      const parentNode = child.previousElementSibling;
-      if (parentNode && parentNode.classList.contains('tree-node')) {
-        // Check if this is the right category
-        const categoryText = parentNode.textContent.toLowerCase();
-        if ((type === 'connections' && categoryText.includes('outbound')) ||
-            (type === 'processes' && categoryText.includes('processes')) ||
-            (type === 'services' && categoryText.includes('services')) ||
-            (type === 'tasks' && categoryText.includes('scheduled')) ||
-            (type === 'autoruns' && categoryText.includes('autorun')) ||
-            (type === 'binaries' && categoryText.includes('binaries')) ||
-            (type === 'directories' && categoryText.includes('directories'))) {
-          // This is the right category, now check index
-          const siblings = Array.from(child.parentElement.children).filter(c => c.classList.contains('tree-child'));
-          const itemIdx = siblings.indexOf(child);
-          if (itemIdx === idx) {
-            targetElement = child;
-          }
-        }
+    // Find the element by matching the data attributes
+    treeChildren.forEach((child) => {
+      if (child.dataset.type === type && parseInt(child.dataset.index) === idx) {
+        targetElement = child;
       }
     });
 
@@ -834,33 +1120,47 @@
         return;
       }
 
-      // Success! Trigger slide-out animation
+      // Success! Trigger slide-out animation and mark as eliminated
       if (targetElement) {
         targetElement.classList.add('eliminating');
 
-        // Wait for animation to complete before updating tree
-        setTimeout(async () => {
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+          // Mark as eliminated (hidden by default, shown in greyscale if toggle is on)
+          targetElement.classList.remove('eliminating');
+          targetElement.classList.add('eliminated');
+
+          // Update the item in currentReport to mark it as eliminated
+          if (currentReport && currentReport.findings) {
+            const findings = currentReport.findings;
+            const typeMap = {
+              'connections': 'outboundConnections',
+              'processes': 'processes',
+              'services': 'services',
+              'tasks': 'scheduledTasks',
+              'autoruns': 'autoRuns',
+              'binaries': 'binaries',
+              'directories': 'directories'
+            };
+            const arrayKey = typeMap[type];
+            if (findings[arrayKey] && findings[arrayKey][idx]) {
+              findings[arrayKey][idx].eliminated = true;
+            }
+          }
+
+          // Update the category count badge
+          updateCategoryCount(type);
+
           // Show success modal
           showModal('success', 'Successfully Eliminated', `The ${type.slice(0, -1)} has been removed from your system.`);
-
-          // Reload the report to get updated data
-          const updatedReport = await (await fetch('/api/report?file=' + encodeURIComponent(reportFile))).json();
-          currentReport = updatedReport;
-
-          // Reload elimination tree with updated data
-          loadEliminationData(updatedReport);
 
           // Clear the center and wiki panels
           elimCenter.innerHTML = '<div class="empty-state">Select an item from the tree</div>';
           elimWiki.innerHTML = '<div class="empty-state">Item details will appear here</div>';
         }, 600); // Match animation duration
       } else {
-        // Fallback if element not found
+        // Fallback if element not found - just show success
         showModal('success', 'Successfully Eliminated', `The ${type.slice(0, -1)} has been removed from your system.`);
-
-        const updatedReport = await (await fetch('/api/report?file=' + encodeURIComponent(reportFile))).json();
-        currentReport = updatedReport;
-        loadEliminationData(updatedReport);
         elimCenter.innerHTML = '<div class="empty-state">Select an item from the tree</div>';
         elimWiki.innerHTML = '<div class="empty-state">Item details will appear here</div>';
       }
@@ -868,7 +1168,7 @@
     } catch (error) {
       showModal('error', 'Error', `Failed to eliminate: ${error.message}`);
     }
-  };
+  }
 
   // Update renderReport to also load elimination data
   const originalRenderReport = renderReport;

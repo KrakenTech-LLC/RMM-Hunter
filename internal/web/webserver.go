@@ -216,12 +216,16 @@ func (s *server) handleListHunts(w http.ResponseWriter, r *http.Request) {
 func (s *server) handleGetReport(w http.ResponseWriter, r *http.Request) {
 	f := r.URL.Query().Get("file")
 	if f == "" || strings.Contains(f, "..") {
-		http.Error(w, "bad file", 400)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "bad file"})
 		return
 	}
 	b, err := os.ReadFile(f)
 	if err != nil {
-		http.Error(w, "not found", 404)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "not found"})
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -230,7 +234,9 @@ func (s *server) handleGetReport(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) handleStartHunt(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "use POST", 405)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "use POST"})
 		return
 	}
 	name := fmt.Sprintf("hunt-%s", time.Now().Format("20060102-150405"))
@@ -296,7 +302,9 @@ func (s *server) handleWS(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) handleEliminate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
 		return
 	}
 
@@ -307,26 +315,42 @@ func (s *server) handleEliminate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid request"})
 		return
 	}
 
 	// Load the report file
-	reportPath := filepath.Join(".", req.ReportFile)
+	reportFile := req.ReportFile
+	if !strings.HasSuffix(reportFile, ".json") {
+		reportFile += ".json"
+	}
+	reportPath := filepath.Join(".", reportFile)
 	data, err := os.ReadFile(reportPath)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to read report: %v", err), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("failed to read report: %v", err)})
 		return
 	}
 
-	var report suspicious.Suspicious
-	if err := json.Unmarshal(data, &report); err != nil {
-		http.Error(w, fmt.Sprintf("failed to parse report: %v", err), http.StatusInternalServerError)
+	// Parse the full report structure with findings wrapper
+	var fullReport struct {
+		ReportName  string                `json:"reportName"`
+		GeneratedAt string                `json:"generatedAt"`
+		RiskRating  interface{}           `json:"riskRating"`
+		Findings    suspicious.Suspicious `json:"findings"`
+	}
+	if err := json.Unmarshal(data, &fullReport); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("failed to parse report: %v", err)})
 		return
 	}
 
 	// Perform elimination based on type
-	if err := performElimination(&report, req.Type, req.Index); err != nil {
+	if err := performElimination(&fullReport.Findings, req.Type, req.Index); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -334,14 +358,18 @@ func (s *server) handleEliminate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save updated report
-	updatedData, err := json.MarshalIndent(report, "", "  ")
+	updatedData, err := json.MarshalIndent(fullReport, "", "  ")
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to marshal report: %v", err), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("failed to marshal report: %v", err)})
 		return
 	}
 
 	if err := os.WriteFile(reportPath, updatedData, 0644); err != nil {
-		http.Error(w, fmt.Sprintf("failed to save report: %v", err), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("failed to save report: %v", err)})
 		return
 	}
 
@@ -351,7 +379,9 @@ func (s *server) handleEliminate(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) handleQuit(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "use POST", 405)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "use POST"})
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -363,8 +393,8 @@ func (s *server) handleQuit(w http.ResponseWriter, r *http.Request) {
 func performElimination(report *suspicious.Suspicious, typeKey string, idx int) error {
 	switch typeKey {
 	case "connections":
-		if idx >= len(report.OutboundConnections) {
-			return fmt.Errorf("invalid index")
+		if idx < 0 || idx >= len(report.OutboundConnections) {
+			return fmt.Errorf("invalid index: %d (array length: %d)", idx, len(report.OutboundConnections))
 		}
 		conn := report.OutboundConnections[idx]
 		if err := eliminate.EliminateConnection(conn.RemoteHost); err != nil {
@@ -373,8 +403,8 @@ func performElimination(report *suspicious.Suspicious, typeKey string, idx int) 
 		report.OutboundConnections[idx].Eliminated = true
 
 	case "processes":
-		if idx >= len(report.Processes) {
-			return fmt.Errorf("invalid index")
+		if idx < 0 || idx >= len(report.Processes) {
+			return fmt.Errorf("invalid index: %d (array length: %d)", idx, len(report.Processes))
 		}
 		proc := report.Processes[idx]
 		if err := eliminate.EliminateProcess(proc); err != nil {
@@ -383,8 +413,8 @@ func performElimination(report *suspicious.Suspicious, typeKey string, idx int) 
 		report.Processes[idx].Eliminated = true
 
 	case "services":
-		if idx >= len(report.Services) {
-			return fmt.Errorf("invalid index")
+		if idx < 0 || idx >= len(report.Services) {
+			return fmt.Errorf("invalid index: %d (array length: %d)", idx, len(report.Services))
 		}
 		svc := report.Services[idx]
 		if svc == nil {
@@ -396,8 +426,8 @@ func performElimination(report *suspicious.Suspicious, typeKey string, idx int) 
 		report.Services[idx].Eliminated = true
 
 	case "tasks":
-		if idx >= len(report.ScheduledTasks) {
-			return fmt.Errorf("invalid index")
+		if idx < 0 || idx >= len(report.ScheduledTasks) {
+			return fmt.Errorf("invalid index: %d (array length: %d)", idx, len(report.ScheduledTasks))
 		}
 		task := report.ScheduledTasks[idx]
 		if task == nil {
@@ -409,8 +439,8 @@ func performElimination(report *suspicious.Suspicious, typeKey string, idx int) 
 		report.ScheduledTasks[idx].Eliminated = true
 
 	case "autoruns":
-		if idx >= len(report.AutoRuns) {
-			return fmt.Errorf("invalid index")
+		if idx < 0 || idx >= len(report.AutoRuns) {
+			return fmt.Errorf("invalid index: %d (array length: %d)", idx, len(report.AutoRuns))
 		}
 		ar := report.AutoRuns[idx]
 		if err := eliminate.EliminateAutoRun(ar); err != nil {
@@ -419,8 +449,8 @@ func performElimination(report *suspicious.Suspicious, typeKey string, idx int) 
 		report.AutoRuns[idx].Eliminated = true
 
 	case "binaries":
-		if idx >= len(report.Binaries) {
-			return fmt.Errorf("invalid index")
+		if idx < 0 || idx >= len(report.Binaries) {
+			return fmt.Errorf("invalid index: %d (array length: %d)", idx, len(report.Binaries))
 		}
 		bin := report.Binaries[idx]
 		// Check if binary is blocked by active processes/services
@@ -433,8 +463,8 @@ func performElimination(report *suspicious.Suspicious, typeKey string, idx int) 
 		report.Binaries[idx].Eliminated = true
 
 	case "directories":
-		if idx >= len(report.Directories) {
-			return fmt.Errorf("invalid index")
+		if idx < 0 || idx >= len(report.Directories) {
+			return fmt.Errorf("invalid index: %d (array length: %d)", idx, len(report.Directories))
 		}
 		dir := report.Directories[idx]
 		// Check if directory is blocked by active processes/services

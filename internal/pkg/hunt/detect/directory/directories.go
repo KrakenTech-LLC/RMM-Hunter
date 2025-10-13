@@ -7,53 +7,100 @@ import (
 	"rmm-hunter/internal/pkg/hunt/detect/common"
 	. "rmm-hunter/internal/suspicious"
 	"strings"
+	"sync"
 )
 
 var appData = os.Getenv("APPDATA")
 var userProfile = os.Getenv("USERPROFILE")
 
-func Detect() []Directory {
-	var suspiciousDirectories []Directory
-	seen := make(map[string]bool) // Prevent duplicates
+const numWorkers = 5
 
+type searchJob struct {
+	basePath string
+	rmmDir   string
+}
+
+func Detect() []Directory {
 	fmt.Printf("[*] Enumerating Suspicious Directories \n")
 
-	// For each known RMM directory, check in all base paths
+	// Create channels
+	jobs := make(chan searchJob, 100)
+	results := make(chan Directory, 100)
+
+	// WaitGroup to track workers
+	var wg sync.WaitGroup
+
+	// Start worker pool
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go worker(jobs, results, &wg)
+	}
+
+	// Start result collector goroutine
+	var suspiciousDirectories []Directory
+	seen := make(map[string]bool)
+	var resultWg sync.WaitGroup
+	resultWg.Add(1)
+
+	go func() {
+		defer resultWg.Done()
+		for dir := range results {
+			if !seen[dir.Path] {
+				fmt.Printf("   [?] Found %s\n", dir.Path)
+				suspiciousDirectories = append(suspiciousDirectories, dir)
+				seen[dir.Path] = true
+			}
+		}
+	}()
+
+	// Send jobs to workers
 	for _, rmmDir := range common.KnownRMMDirectories {
 		for _, basePath := range common.SearchBasePaths {
-			// Replace environment variables
-			basePath = replaceEnvVars(basePath)
-
-			// Construct full path
-			fullPath := filepath.Join(basePath, rmmDir)
-
-			// Check if this is a prefix pattern (ends with incomplete path like "ScreenConnect Client (")
-			if isPrefix(rmmDir) {
-				// Find all directories matching this prefix
-				matches := findPrefixMatches(fullPath)
-				for _, match := range matches {
-					if !seen[match] {
-						fmt.Printf("   [?] Found %s\n", match)
-						suspiciousDirectories = append(suspiciousDirectories, Directory{Path: match})
-						seen[match] = true
-					}
-				}
-			} else {
-				// Exact match
-				if _, err := os.Stat(fullPath); err == nil {
-					if !seen[fullPath] {
-						fmt.Printf("   [?] Found %s\n", fullPath)
-						suspiciousDirectories = append(suspiciousDirectories, Directory{Path: fullPath})
-						seen[fullPath] = true
-					}
-				}
+			jobs <- searchJob{
+				basePath: basePath,
+				rmmDir:   rmmDir,
 			}
 		}
 	}
 
+	// Close jobs channel and wait for workers to finish
+	close(jobs)
+	wg.Wait()
+
+	// Close results channel and wait for collector to finish
+	close(results)
+	resultWg.Wait()
+
 	fmt.Printf("[+] Found %d Suspicious Directories\n", len(suspiciousDirectories))
 
 	return suspiciousDirectories
+}
+
+// worker processes search jobs from the jobs channel
+func worker(jobs <-chan searchJob, results chan<- Directory, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for job := range jobs {
+		// Replace environment variables
+		basePath := replaceEnvVars(job.basePath)
+
+		// Construct full path
+		fullPath := filepath.Join(basePath, job.rmmDir)
+
+		// Check if this is a prefix pattern (ends with incomplete path like "ScreenConnect Client (")
+		if isPrefix(job.rmmDir) {
+			// Find all directories matching this prefix
+			matches := findPrefixMatches(fullPath)
+			for _, match := range matches {
+				results <- Directory{Path: match}
+			}
+		} else {
+			// Exact match
+			if _, err := os.Stat(fullPath); err == nil {
+				results <- Directory{Path: fullPath}
+			}
+		}
+	}
 }
 
 // replaceEnvVars replaces environment variable placeholders with actual paths
