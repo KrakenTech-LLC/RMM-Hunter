@@ -16,7 +16,7 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#070a08);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 
-    /* Custom scrollbar styling */
+    /* Scrollbar styling */
     *::-webkit-scrollbar{width:12px;height:12px}
     *::-webkit-scrollbar-track{background:#050805;border-radius:10px}
     *::-webkit-scrollbar-thumb{background:#124b2b;border-radius:10px;border:2px solid #050805}
@@ -200,7 +200,7 @@
       setTimeout(function() {
         splash.style.display = 'none';
       }, 500);
-    }, 1500); // Show splash for 1.5 seconds
+    }, 1500); // Display splash for 1.5 seconds, give the// server time to start
   });
 
   const logEl = document.getElementById('log');
@@ -225,7 +225,7 @@
     // Make eliminate page full-width
     mainEl.classList.toggle('full-width', h==='#eliminate');
 
-    // If navigating to eliminate without a loaded report, show helpful message
+    // If navigating to eliminate without a loaded report, show message
     if (h === '#eliminate' && !currentReport) {
       elimTree.innerHTML = '<div class="empty-state">No report loaded.<br><br>Please run a hunt or load a previous report first.</div>';
       elimCenter.innerHTML = '<div class="empty-state">Load a report to see elimination options</div>';
@@ -329,7 +329,7 @@
   function escapeHTML(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
   function riskColor(r){ if(!r) return '#5a6'; r=(r+"").toLowerCase(); if(r==='high')return '#ff5c7a'; if(r==='medium')return '#ffd166'; if(r==='low')return '#17e46e'; return '#5a6'; }
 
-  // Typing animation function
+  // Type animation function
   function typeText(element, text, speed = 50) {
     element.textContent = '';
     element.classList.add('typing');
@@ -502,7 +502,7 @@
     currentReport = data;
     const findings = data.findings || data;
 
-    // Build tree structure with order of operations
+    // Build tree structure using order of operations
     const categories = [
       { key: 'connections', title: 'Outbound Connections', arr: findings.outboundConnections },
       { key: 'processes', title: 'Processes', arr: findings.processes },
@@ -578,7 +578,7 @@
     const orderInfo = eliminationOrder[type];
     const wiki = wikiContent[type];
 
-    // Center panel - item details
+    // | |x| | item details
     elimCenter.innerHTML = `
       <div class="order-badge ${orderInfo.color}">${orderInfo.label}</div>
       <h3 style="margin:0 0 16px 0;color:var(--text)">${getItemLabel(type, item, idx)}</h3>
@@ -589,7 +589,7 @@
       </button>
     `;
 
-    // Right panel - wiki
+    // | | |x| - wiki
     elimWiki.innerHTML = `
       <div class="wiki-section">
         <div class="wiki-title">${wiki.title}</div>
@@ -634,7 +634,7 @@
   window.eliminateItem = function(type, idx) {
     if (!confirm(`Are you sure you want to eliminate this ${type.slice(0, -1)}?\n\nThis action cannot be undone.`)) return;
 
-    alert('Elimination functionality requires backend API implementation.\n\nFor now, please use the CLI: rmm-hunter eliminate --cli');
+    alert('Elimination functionality not yet implemented in web UI.\n\nPlease use the CLI: rmm-hunter eliminate --cli');
     // TODO: Implement API call to backend elimination endpoint
   };
 
