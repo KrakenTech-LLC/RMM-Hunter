@@ -10,6 +10,26 @@ RMM-Hunter is an analysis tool that identifies potentially malicious or unauthor
 
 ## Features
 
+### Web Interface
+
+RMM-Hunter now includes a modern web-based interface for both hunting and elimination operations. Simply double-click the executable to launch the web server, which automatically:
+
+- **Starts a local web server** on port 80 (http://rmm-hunter)
+- **Adds a DNS entry** to your Windows hosts file for easy access via `http://rmm-hunter`
+- **Requests UAC elevation** if administrator privileges are not already granted
+- **Opens your default browser** automatically to the web interface
+- **Cleans up the hosts entry** when the application exits
+
+![](.gif/web_execute.gif)
+
+The web interface provides:
+- Real-time hunt execution with live log streaming via WebSockets
+- Interactive elimination interface with visual feedback
+- Previous hunt report browsing and analysis
+- Modern, responsive UI accessible from any browser on the local machine
+
+![](.gif/web_hunt.gif)
+
 ### Hunt Module
 
 The hunt module performs deep system analysis across multiple detection vectors:
@@ -58,6 +78,7 @@ The HTML report includes:
 
 - Windows Operating System (Windows 10/11 or Windows Server 2016+)
 - Administrator privileges (required for service and process enumeration)
+  - The application will automatically request UAC elevation if not running as administrator
 - Go 1.24+ (for building from source)
 
 ### Binary Download
@@ -74,9 +95,31 @@ The Scurvy Library is not publicly accessible making building this tool from sou
 
 ## Usage
 
-### Hunt Mode
+### Web Interface (Recommended)
 
-Execute a comprehensive system scan:
+Launch the web interface by simply running the executable without arguments:
+
+```powershell
+.\rmm-hunter.exe
+```
+
+This will:
+1. Check for administrator privileges and request UAC elevation if needed
+2. Start a web server on port 80
+3. Add `rmm-hunter` to your hosts file (pointing to 127.0.0.1)
+4. Automatically open your browser to `http://rmm-hunter`
+
+From the web interface, you can:
+- Execute hunts with real-time progress monitoring
+- View and analyze previous hunt reports
+- Perform elimination operations on detected RMM software
+- Access all functionality through an intuitive browser-based UI
+
+The hosts file entry is automatically cleaned up when you exit the application.
+
+### Hunt Mode (CLI)
+
+Execute a comprehensive system scan from the command line:
 
 ```powershell
 powershell .\rmm-hunter.exe hunt
@@ -86,7 +129,7 @@ With custom output file:
 
 ```powershell
 powershell .\rmm-hunter.exe hunt --output custom-report.json
-``` 
+```
 
 Exclude specific RMM tools from detection:
 ```powershell
@@ -95,7 +138,28 @@ powershell .\rmm-hunter.exe hunt --exclude TeamViewer,AnyDesk
 
 ### Eliminate Mode
 
-The elimination module provides an interactive command-line interface for removing detected RMM installations from your system. The CLI component is fully functional, while the web-based interface is currently under development.
+The elimination module provides both web-based and command-line interfaces for removing detected RMM installations from your system. Both interfaces automatically request UAC elevation if administrator privileges are required.
+
+#### Web Interface
+
+The web interface provides a modern, browser-based elimination experience:
+
+```powershell
+.\rmm-hunter.exe
+```
+
+Or explicitly launch the web-based elimination interface:
+
+```powershell
+powershell .\rmm-hunter.exe eliminate --web
+```
+
+The web interface offers:
+- Visual representation of all detected RMM components
+- Real-time elimination with progress feedback
+- Dependency checking to prevent system instability
+- Interactive browsing of previous hunt reports
+- Live log streaming during operations
 
 #### CLI Component
 
@@ -157,16 +221,6 @@ After each successful elimination, the system updates the JSON report file to ma
 
 Throughout the interface, you can navigate backward using the left arrow key to return to the previous screen. Pressing 'q', 'Esc', or 'Ctrl+C' at any point will exit the application. The interface provides contextual help at each stage, displaying available keyboard shortcuts and actions.
 
-#### Web Component (Under Development)
-
-The web-based elimination interface is planned for a future release and will provide browser-based remediation capabilities with enhanced visualization and reporting features.
-
-```powershell
-powershell .\rmm-hunter.exe eliminate --web
-```
-
-This functionality is not yet available.
-
 ## Architecture
 
 RMM-Hunter is built on **Scurvy**, a custom low-level OS exploitation repository (private). Scurvy provides the core capabilities for low-level Windows API interactions, process and service management, registry operations, network connection enumeration, and WMI query execution. The modular architecture allows for extensible detection capabilities while maintaining performance and stability.
@@ -196,7 +250,7 @@ RMM-Hunter employs multiple detection strategies:
 
 ## Limitations
 
-Requires administrative privileges for complete system visibility. May generate false positives in environments with legitimate RMM deployments. Network detection requires active connections at scan time. The web-based elimination interface is not yet available.
+Requires administrative privileges for complete system visibility (UAC elevation prompt will appear if needed). May generate false positives in environments with legitimate RMM deployments. Network detection requires active connections at scan time. The web server requires port 80 to be available on the local machine.
 
 ## Contributing
 
