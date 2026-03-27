@@ -1,25 +1,27 @@
-Copyright (c) 2025 KrakenTech LLC
+KrakenTech Proprietary License
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to use,
-copy, modify, and merge the Software for personal or internal business
-purposes, subject to the following conditions:
+Copyright (c) 2025 KrakenTech LLC. All rights reserved.
 
-1. The Software may not be distributed, sublicensed, sold, resold, or
-   otherwise transferred to any third party, in whole or in part, in any
-   form (source code, binary, modified, or unmodified), without the prior
-   written consent of KrakenTech LLC.
+Permission is hereby granted to view and use this software for personal,
+educational, or internal business purposes only, subject to the following
+restrictions:
 
-2. The Software may not be used to create derivative works intended for
-   distribution or sale without the prior written consent of KrakenTech LLC.
+1. You may NOT distribute, sublicense, publish, sell, resell, or otherwise
+   make this software available to any third party, in whole or in part,
+   in source or binary form.
 
-3. The above copyright notice and this permission notice shall be included
-   in all copies or substantial portions of the Software.
+2. You may NOT create derivative works for distribution or commercial use.
+
+3. You may NOT use this software to provide a competing product or service.
+
+4. Modifications for personal or internal use are permitted, provided they
+   are not distributed.
+
+5. This copyright notice and license must be included in all copies.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED. IN NO EVENT SHALL KRAKENTECH LLC BE LIABLE FOR ANY CLAIM, DAMAGES
+OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+
+For commercial licensing, redistribution rights, or other inquiries,
+contact: licensing@krkn.tech
