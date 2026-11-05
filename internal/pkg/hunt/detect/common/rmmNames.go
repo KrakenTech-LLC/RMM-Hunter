@@ -191,6 +191,12 @@ var CommonRMMs = []string{
 	"Ninja One",
 	"NinjaRMM",
 	"Ninja RMM",
+	// Source: https://nizlo.com/guides/nizlo-rmm-security-indicators
+	"Nizlo",
+	"Nizlo Agent",
+	"NizloAgent",
+	"Nizlo RMM",
+	"Nizlo RMM Agent",
 	"NoMachine",
 	"No Machine",
 

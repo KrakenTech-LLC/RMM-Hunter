@@ -55,6 +55,8 @@ var KnownRMMDirectories = []string{
 	// N
 	`NetSarang`,
 	`NetSarang\xShell`,
+	// Source: https://nizlo.com/guides/nizlo-rmm-security-indicators
+	`Nizlo\Agent`,
 
 	// O
 	`OnionShare`,

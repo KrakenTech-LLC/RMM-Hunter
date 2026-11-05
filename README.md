@@ -52,7 +52,7 @@ RMM-Hunter maintains an extensive signature database covering:
 
 - TeamViewer, AnyDesk, LogMeIn, ScreenConnect
 - Remote Utilities, UltraVNC, RealVNC, TightVNC
-- Atera, NinjaRMM, ConnectWise, Syncro
+- Atera, NinjaRMM, Nizlo, ConnectWise, Syncro
 - 500+ additional RMM tools and variants
 
 The tool implements intelligent filtering to reduce false positives while flagging suspicious installation paths and configurations.
